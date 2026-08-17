@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { AuthProvider, useAuth } from "./lib/auth";
+import { ToastProvider } from "./lib/toast";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 import { Login } from "./pages/Login";
 import { Layout, type PageKey } from "./components/Layout";
 import { Dashboard } from "./pages/Dashboard";
@@ -10,6 +12,7 @@ import { Vehicles } from "./pages/Vehicles";
 import { Customers } from "./pages/Customers";
 import { Payroll } from "./pages/Payroll";
 import { Settings } from "./pages/Settings";
+import { DieselDistribution } from "./pages/DieselDistribution";
 
 const validPages: PageKey[] = [
   "dashboard",
@@ -18,6 +21,7 @@ const validPages: PageKey[] = [
   "employees",
   "vehicles",
   "customers",
+  "diesel",
   "payroll",
   "settings",
 ];
@@ -28,7 +32,7 @@ function hashPage(): PageKey {
 }
 
 function Shell() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const [page, setPage] = useState<PageKey>(hashPage);
 
   useEffect(() => {
@@ -42,6 +46,17 @@ function Shell() {
     setPage(p);
   };
 
+  if (loading) {
+    return (
+      <div className="flex h-full items-center justify-center bg-surface">
+        <div className="flex flex-col items-center gap-3">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-brand border-t-transparent" />
+          <p className="text-sm text-muted">Loading…</p>
+        </div>
+      </div>
+    );
+  }
+
   if (!user) return <Login />;
 
   return (
@@ -52,8 +67,9 @@ function Shell() {
       {page === "employees" && <Employees />}
       {page === "vehicles" && <Vehicles />}
       {page === "customers" && <Customers />}
-      {page === "payroll" && <Payroll />}
-      {page === "settings" && <Settings />}
+            {page === "diesel" && <DieselDistribution />}
+            {page === "payroll" && <Payroll />}
+            {page === "settings" && <Settings />}
     </Layout>
   );
 }
@@ -61,7 +77,11 @@ function Shell() {
 export default function App() {
   return (
     <AuthProvider>
-      <Shell />
+      <ToastProvider>
+              <ErrorBoundary>
+                <Shell />
+              </ErrorBoundary>
+            </ToastProvider>
     </AuthProvider>
   );
 }

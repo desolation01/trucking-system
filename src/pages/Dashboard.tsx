@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import {
   ResponsiveContainer,
   BarChart,
@@ -18,7 +18,7 @@ import {
 } from "recharts";
 import { subDays, differenceInCalendarDays } from "date-fns";
 import { TrendingDown, TrendingUp, Truck, Wallet, Coins, ArrowRight, Clock3, XCircle, CheckCircle } from "lucide-react";
-import { useStore } from "../lib/store";
+import { useStore, useStoreLoading } from "../lib/store";
 import {
   buildSeries,
   computeKpis,
@@ -31,13 +31,13 @@ import {
   type QuickRange,
   type Range,
 } from "../lib/analytics";
-import { Card, Delta, Select, Sparkline, cx, statusTone, Badge } from "../components/ui";
+import { Card, Delta, Select, Skeleton, SkeletonCard, Sparkline, cx, statusTone, Badge } from "../components/ui";
 import { peso, peso0, fmtTime } from "../lib/format";
 import type { PageKey } from "../components/Layout";
 
-const COLORS = ["#fbbf24", "#38bdf8", "#34d399", "#a78bfa", "#f472b6", "#94a3b8"];
-const GRID_STROKE = "rgba(42, 49, 66, 0.55)";
-const TICK_FILL = "#64748b";
+const COLORS = ["#f59e0b", "#38bdf8", "#34d399", "#a78bfa", "#f472b6", "#94a3b8"];
+const GRID_STROKE = "rgba(42, 49, 66, 0.4)";
+const TICK_FILL = "#6b7280";
 
 const rangeOptions: Array<{ key: QuickRange; label: string }> = [
   { key: "today", label: "Today" },
@@ -54,7 +54,19 @@ function prevRange(range: Range): Range {
 
 export function Dashboard({ onNavigate }: { onNavigate: (p: PageKey) => void }) {
   const data = useStore();
+  const loading = useStoreLoading();
+  const [forceShow, setForceShow] = useState(false);
   const [quick, setQuick] = useState<QuickRange>("month");
+
+  // Force show dashboard after 2s even if Supabase is still loading
+  useEffect(() => {
+    if (loading) {
+      const t = setTimeout(() => setForceShow(true), 2000);
+      return () => clearTimeout(t);
+    }
+  }, [loading]);
+
+  const showSkeleton = loading && !forceShow;
   const [vehicleFilter, setVehicleFilter] = useState("");
   const [driverFilter, setDriverFilter] = useState("");
 
@@ -95,13 +107,13 @@ export function Dashboard({ onNavigate }: { onNavigate: (p: PageKey) => void }) 
   const chartTooltip = (formatter: (v: number) => string) => ({ active, payload, label }: any) => {
     if (!active || !payload?.length) return null;
     return (
-      <div className="rounded-md border border-edge bg-card px-3 py-2 text-xs shadow-card-hover">
-        <p className="mb-1 font-medium text-ink">{label}</p>
+      <div className="rounded-lg border border-edge bg-card px-4 py-3 text-xs shadow-dropdown">
+        <p className="mb-1.5 font-medium text-ink">{label}</p>
         {payload.map((p: any) => (
-          <p key={p.dataKey} className="flex items-center gap-2">
+          <p key={p.dataKey} className="flex items-center gap-2 py-0.5">
             <span className="h-2 w-2 rounded-full" style={{ background: p.color ?? p.fill }} />
             <span className="capitalize text-muted">{String(p.name).replace("_", " ")}:</span>
-            <span className="tnum font-medium text-ink">{formatter(p.value)}</span>
+            <span className="tnum font-semibold text-ink">{formatter(p.value)}</span>
           </p>
         ))}
       </div>
@@ -112,14 +124,38 @@ export function Dashboard({ onNavigate }: { onNavigate: (p: PageKey) => void }) 
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-wrap items-center gap-3">
-        <div className="flex flex-wrap gap-1 rounded-md border border-edge bg-card p-1 shadow-card">
+      {showSkeleton ? (
+        <div className="space-y-5">
+          <div className="flex gap-2">
+            <Skeleton className="h-8 w-20 rounded-lg" />
+            <Skeleton className="h-8 w-20 rounded-lg" />
+            <Skeleton className="h-8 w-24 rounded-lg" />
+            <Skeleton className="h-8 w-28 rounded-lg" />
+            <Skeleton className="h-8 w-24 rounded-lg" />
+          </div>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <SkeletonCard />
+            <SkeletonCard />
+            <SkeletonCard />
+            <SkeletonCard />
+          </div>
+          <div className="grid gap-5 lg:grid-cols-3">
+            <div className="lg:col-span-2">
+              <Skeleton className="h-80 rounded-lg" />
+            </div>
+            <Skeleton className="h-80 rounded-lg" />
+          </div>
+        </div>
+      ) : (
+        <>
+          <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap gap-1 rounded-lg border border-edge bg-card p-1 shadow-card">
           {rangeOptions.map((o) => (
             <button
               key={o.key}
               onClick={() => setQuick(o.key)}
               className={cx(
-                "tnum rounded px-3 py-1.5 text-xs font-medium transition-all duration-150",
+                "tnum rounded-md px-3 py-1.5 text-xs font-medium transition-all duration-150",
                 quick === o.key
                   ? "bg-brand text-on-brand shadow-glow"
                   : "text-ink-soft hover:bg-ink/5 hover:text-ink"
@@ -295,7 +331,7 @@ export function Dashboard({ onNavigate }: { onNavigate: (p: PageKey) => void }) 
           title="Top Drivers"
           subtitle="By profit generated"
           actions={
-            <button onClick={() => onNavigate("payroll")} className="flex items-center gap-1 text-xs font-medium text-amber-400 hover:underline">
+            <button onClick={() => onNavigate("payroll")} className="flex items-center gap-1 text-xs font-medium text-amber-500 dark:text-amber-400 hover:underline">
               Payroll <ArrowRight className="h-3 w-3" />
             </button>
           }
@@ -305,7 +341,7 @@ export function Dashboard({ onNavigate }: { onNavigate: (p: PageKey) => void }) 
               <div key={d.id} className="flex items-center gap-3">
                 <span
                   className={cx(
-                    "flex h-7 w-7 shrink-0 items-center justify-center rounded-md font-display text-[11px] font-bold",
+                    "flex h-7 w-7 shrink-0 items-center justify-center rounded-lg font-display text-[11px] font-bold",
                     i === 0 ? "bg-brand text-on-brand" : "bg-ink/5 text-ink-soft"
                   )}
                 >
@@ -315,7 +351,7 @@ export function Dashboard({ onNavigate }: { onNavigate: (p: PageKey) => void }) 
                   <p className="truncate text-sm font-medium text-ink">{d.name}</p>
                   <p className="tnum text-[11px] text-muted">{d.trips} trips · {peso0(d.gross)} gross</p>
                 </div>
-                <span className={cx("tnum text-sm font-semibold", d.profit >= 0 ? "text-emerald-400" : "text-red-400")}>
+                <span className={cx("tnum text-sm font-semibold", d.profit >= 0 ? "text-emerald-500 dark:text-emerald-400" : "text-red-500 dark:text-red-400")}>
                   {peso0(d.profit)}
                 </span>
               </div>
@@ -331,7 +367,7 @@ export function Dashboard({ onNavigate }: { onNavigate: (p: PageKey) => void }) 
         >
           {filteredTrips.filter((t) => t.status !== "completed").length === 0 ? (
             <p className="flex items-center gap-2 py-6 text-center text-xs text-muted">
-              <CheckCircle className="h-4 w-4 text-emerald-500" /> All trips completed in this period.
+              <CheckCircle className="h-4 w-4 text-emerald-500 dark:text-emerald-400" /> All trips completed in this period.
             </p>
           ) : (
             <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
@@ -341,11 +377,11 @@ export function Dashboard({ onNavigate }: { onNavigate: (p: PageKey) => void }) 
                 .map((t) => {
                   const driver = data.employees.find((e) => e.id === t.driver_id);
                   return (
-                    <div key={t.id} className="flex items-center gap-3 rounded-md border border-edge/70 bg-card-soft px-3 py-2.5">
+                    <div key={t.id} className="flex items-center gap-3 rounded-lg border border-edge/70 bg-card-soft px-3 py-2.5">
                       {t.status === "cancelled" ? (
-                        <XCircle className="h-4 w-4 shrink-0 text-red-500" />
+                        <XCircle className="h-4 w-4 shrink-0 text-red-500 dark:text-red-400" />
                       ) : (
-                        <Clock3 className="h-4 w-4 shrink-0 text-amber-500" />
+                        <Clock3 className="h-4 w-4 shrink-0 text-amber-500 dark:text-amber-400" />
                       )}
                       <div className="min-w-0 flex-1">
                         <p className="tnum truncate text-sm font-medium text-ink">{t.transportify_id}</p>
@@ -361,6 +397,8 @@ export function Dashboard({ onNavigate }: { onNavigate: (p: PageKey) => void }) 
           )}
         </Card>
       </div>
+          </>
+        )}
     </div>
   );
 }
@@ -385,18 +423,18 @@ function KpiCard({
   sub?: string;
 }) {
   const iconTones = {
-    amber: "bg-amber-500/15 text-amber-400",
-    cyan: "bg-cyan-500/15 text-cyan-400",
-    green: "bg-emerald-500/15 text-emerald-400",
-    red: "bg-red-500/15 text-red-400",
+    amber: "bg-amber-500/15 text-amber-500 dark:text-amber-400",
+    cyan: "bg-cyan-500/15 text-cyan-500 dark:text-cyan-400",
+    green: "bg-emerald-500/15 text-emerald-500 dark:text-emerald-400",
+    red: "bg-red-500/15 text-red-500 dark:text-red-400",
   };
   return (
-    <div className="group rounded-lg border border-edge bg-card p-4 shadow-card transition-all duration-200 hover:border-edge-strong hover:shadow-card-hover">
+    <div className="group rounded-xl border border-edge bg-card p-5 shadow-card transition-all duration-200 hover:border-edge-strong hover:shadow-card-hover">
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-3">
-          <div className={cx("flex h-10 w-10 shrink-0 items-center justify-center rounded-md", iconTones[tone])}>{icon}</div>
+          <div className={cx("flex h-10 w-10 shrink-0 items-center justify-center rounded-lg", iconTones[tone])}>{icon}</div>
           <div className="min-w-0">
-            <p className="truncate text-[11px] font-semibold uppercase tracking-wider text-muted">{label}</p>
+            <p className="truncate text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">{label}</p>
             <p className="tnum font-display text-xl font-bold tracking-tight text-ink">{value}</p>
           </div>
         </div>

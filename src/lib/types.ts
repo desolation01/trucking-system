@@ -28,6 +28,7 @@ export interface Employee {
   hire_date: string;
   status: "active" | "inactive";
   commission_override?: number | null;
+  base_salary: number;
   notes?: string;
   created_at: string;
 }
@@ -38,6 +39,7 @@ export interface Vehicle {
   type: string;
   capacity_kg: number;
   status: "active" | "inactive";
+  driver_id?: string;
   created_at: string;
 }
 
@@ -56,6 +58,7 @@ export interface Trip {
   transportify_id: string;
   cargo_weight?: number;
   cargo_dimensions?: string;
+  km_traveled?: number;
   customer_phone: string;
   customer_name?: string;
   pickup_address: string;
@@ -83,6 +86,7 @@ export interface CommissionRule {
   role: "driver" | "helper";
   basis: CommissionBasis;
   default_percentage: number;
+  two_helper_percentage?: number;
   vehicle_type_overrides: Record<string, number>;
   employee_overrides: Record<string, number>;
   min_guaranteed_pay: number;

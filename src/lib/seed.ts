@@ -26,6 +26,7 @@ export const seedEmployees: Employee[] = [
     hire_date: isoDate(400),
     status: "active",
     commission_override: 14,
+    base_salary: 15000,
     created_at: isoDate(400),
   },
   {
@@ -37,6 +38,7 @@ export const seedEmployees: Employee[] = [
     license_no: "D01-2345-67891",
     hire_date: isoDate(360),
     status: "active",
+    base_salary: 12000,
     created_at: isoDate(360),
   },
   {
@@ -48,6 +50,7 @@ export const seedEmployees: Employee[] = [
     license_no: "D01-2345-67892",
     hire_date: isoDate(300),
     status: "active",
+    base_salary: 12000,
     created_at: isoDate(300),
   },
   {
@@ -59,6 +62,7 @@ export const seedEmployees: Employee[] = [
     license_no: "D01-2345-67893",
     hire_date: isoDate(250),
     status: "inactive",
+    base_salary: 10000,
     created_at: isoDate(250),
   },
   {
@@ -69,6 +73,7 @@ export const seedEmployees: Employee[] = [
     contact: "0917 555 0201",
     hire_date: isoDate(300),
     status: "active",
+    base_salary: 8000,
     created_at: isoDate(300),
   },
   {
@@ -79,6 +84,7 @@ export const seedEmployees: Employee[] = [
     contact: "0917 555 0202",
     hire_date: isoDate(280),
     status: "active",
+    base_salary: 8000,
     created_at: isoDate(280),
   },
   {
@@ -89,6 +95,7 @@ export const seedEmployees: Employee[] = [
     contact: "0917 555 0203",
     hire_date: isoDate(220),
     status: "active",
+    base_salary: 8000,
     created_at: isoDate(220),
   },
   {
@@ -99,6 +106,7 @@ export const seedEmployees: Employee[] = [
     contact: "0917 555 0301",
     hire_date: isoDate(500),
     status: "active",
+    base_salary: 18000,
     created_at: isoDate(500),
   },
   {
@@ -109,6 +117,7 @@ export const seedEmployees: Employee[] = [
     contact: "0917 555 0302",
     hire_date: isoDate(200),
     status: "active",
+    base_salary: 16000,
     created_at: isoDate(200),
   },
 ];
@@ -120,6 +129,7 @@ export const seedVehicles: Vehicle[] = [
     type: "L300",
     capacity_kg: 1200,
     status: "active",
+    driver_id: "emp-driver-1",
     created_at: isoDate(400),
   },
   {
@@ -128,6 +138,7 @@ export const seedVehicles: Vehicle[] = [
     type: "L300",
     capacity_kg: 1200,
     status: "active",
+    driver_id: "emp-driver-2",
     created_at: isoDate(400),
   },
   {
@@ -136,6 +147,7 @@ export const seedVehicles: Vehicle[] = [
     type: "4-Wheeler",
     capacity_kg: 2500,
     status: "active",
+    driver_id: "emp-driver-3",
     created_at: isoDate(380),
   },
   {
@@ -176,14 +188,13 @@ export const seedCommissionRules: CommissionRule[] = [
     id: "rule-driver",
     role: "driver",
     basis: "profit",
-    default_percentage: 12,
+    default_percentage: 25,
+    two_helper_percentage: 22,
     vehicle_type_overrides: {
-      "10-Wheeler Wingvan": 15,
+      "10-Wheeler Wingvan": 22,
     },
-    employee_overrides: {
-      "emp-driver-1": 14,
-    },
-    min_guaranteed_pay: 350,
+    employee_overrides: {},
+    min_guaranteed_pay: 0,
     split_mode: "equal",
     updated_at: isoDate(30),
   },
@@ -191,10 +202,11 @@ export const seedCommissionRules: CommissionRule[] = [
     id: "rule-helper",
     role: "helper",
     basis: "profit",
-    default_percentage: 4,
+    default_percentage: 20,
+    two_helper_percentage: 24,
     vehicle_type_overrides: {},
     employee_overrides: {},
-    min_guaranteed_pay: 100,
+    min_guaranteed_pay: 0,
     split_mode: "equal",
     updated_at: isoDate(30),
   },

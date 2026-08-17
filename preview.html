@@ -1,0 +1,1025 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FastHaul Ops Preview</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      color-scheme: dark;
+      --surface: #0b0f19;
+      --panel: #11151f;
+      --card: #161b26;
+      --card-soft: #1a1f2b;
+      --elevated: #1e2433;
+      --edge: #2a3142;
+      --edge-strong: #3a4256;
+      --ink: #f1f5f9;
+      --ink-soft: #94a3b8;
+      --muted: #64748b;
+      --brand: #f59e0b;
+      --brand-strong: #fbbf24;
+      --brand-soft: rgb(245 158 11 / 0.15);
+      --on-brand: #1c1917;
+      --panel-edge: rgb(255 255 255 / 0.07);
+      --panel-ink: #94a3b8;
+      --panel-ink-strong: #f1f5f9;
+      --panel-soft: #161b26;
+      --emerald-400: #4ade80;
+      --emerald-500: #22c55e;
+      --sky-400: #38bdf8;
+      --sky-500: #0ea5e9;
+      --red-400: #f87171;
+      --red-500: #ef4444;
+      --cyan-400: #22d3ee;
+      --cyan-500: #06b6d4;
+      --amber-400: #fbbf24;
+      --amber-500: #f59e0b;
+      --slate-400: #94a3b8;
+      --sh-card-a: rgb(0 0 0 / 0.25);
+      --sh-card-b: rgb(0 0 0 / 0.2);
+      --sh-hover-a: rgb(0 0 0 / 0.4);
+      --sh-hover-b: rgb(0 0 0 / 0.3);
+      --sh-glow: rgb(245 158 11 / 0.45);
+    }
+
+    .light {
+      color-scheme: light;
+      --surface: #f5f6f8;
+      --panel: #eceff3;
+      --card: #ffffff;
+      --card-soft: #eef1f5;
+      --elevated: #ffffff;
+      --edge: #e2e6ec;
+      --edge-strong: #cbd2dd;
+      --ink: #1b2333;
+      --ink-soft: #455366;
+      --muted: #667085;
+      --brand: #f59e0b;
+      --brand-strong: #d97706;
+      --brand-soft: rgb(245 158 11 / 0.12);
+      --on-brand: #1c1917;
+      --panel-edge: rgb(27 35 51 / 0.1);
+      --panel-ink: #5b6b7c;
+      --panel-ink-strong: #1b2333;
+      --panel-soft: #ffffff;
+      --emerald-400: #059669;
+      --emerald-500: #059669;
+      --sky-400: #0284c7;
+      --sky-500: #0284c7;
+      --red-400: #dc2626;
+      --red-500: #dc2626;
+      --cyan-400: #0e7490;
+      --cyan-500: #0891b2;
+      --amber-400: #d97706;
+      --amber-500: #f59e0b;
+      --slate-400: #64748b;
+      --sh-card-a: rgb(15 23 42 / 0.05);
+      --sh-card-b: rgb(15 23 42 / 0.07);
+      --sh-hover-a: rgb(15 23 42 / 0.1);
+      --sh-hover-b: rgb(15 23 42 / 0.06);
+      --sh-glow: rgb(245 158 11 / 0.35);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+      background: var(--surface);
+      color: var(--ink);
+      -webkit-font-smoothing: antialiased;
+      font-feature-settings: "cv11", "ss01";
+    }
+    .font-display { font-family: 'Space Grotesk', 'Inter', ui-sans-serif, sans-serif; letter-spacing: -0.02em; }
+    .tnum { font-variant-numeric: tabular-nums; }
+
+    ::-webkit-scrollbar { width: 10px; height: 10px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--edge-strong); border-radius: 6px; border: 2px solid var(--surface); }
+
+    .app { display: flex; height: 100vh; }
+
+    /* Sidebar */
+    .sidebar {
+      width: 240px; flex-shrink: 0;
+      background: var(--panel);
+      display: flex; flex-direction: column;
+    }
+    .brand-area { padding: 20px 24px; }
+    .brand {
+      display: flex; align-items: center; gap: 12px;
+    }
+    .brand-icon {
+      width: 36px; height: 36px; border-radius: 6px;
+      background: var(--brand); color: var(--on-brand);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px; box-shadow: 0 2px 12px -2px var(--sh-glow);
+    }
+    .brand-text { line-height: 1.2; }
+    .brand-text h1 { font-size: 15px; font-weight: 700; letter-spacing: -0.02em; color: var(--panel-ink-strong); }
+    .brand-text p { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--panel-ink); }
+    .hazard-divider {
+      margin: 0 24px; height: 3px; border-radius: 999px;
+      background-image: repeating-linear-gradient(-45deg, var(--brand) 0 12px, var(--on-brand) 12px 24px);
+      opacity: 0.6;
+    }
+    .nav { flex: 1; overflow-y: auto; padding: 12px; }
+    .nav-section { margin-top: 4px; }
+    .nav-section-title {
+      padding: 6px 12px 4px;
+      font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em;
+      color: var(--panel-ink); opacity: 0.6;
+    }
+    .nav-item {
+      display: flex; align-items: center; gap: 12px;
+      width: 100%; padding: 8px 12px; border-radius: 6px;
+      font-size: 14px; font-weight: 500;
+      color: var(--panel-ink);
+      position: relative; cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+    }
+    .nav-item:hover { background: rgb(255 255 255 / 0.04); color: var(--panel-ink-strong); }
+    .nav-item.active { color: var(--amber-400); }
+    .nav-item.active .nav-indicator {
+      position: absolute; left: 0; top: 50%; transform: translateY(-50%);
+      width: 3px; height: 16px; border-radius: 999px;
+      background: var(--amber-400);
+    }
+    .nav-item svg { width: 16px; height: 16px; flex-shrink: 0; }
+    .nav-item.active svg { color: var(--amber-400); }
+    .nav-item svg:not(.active) { color: var(--panel-ink); opacity: 0.7; }
+
+    .user-card {
+      border-top: 1px solid var(--panel-edge);
+      padding: 16px;
+    }
+    .user-card-inner {
+      display: flex; align-items: center; gap: 12px;
+      background: var(--panel-soft); border-radius: 6px;
+      padding: 10px 12px;
+    }
+    .avatar {
+      width: 36px; height: 36px; border-radius: 6px;
+      background: var(--brand); opacity: 0.2;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Space Grotesk', sans-serif; font-size: 14px; font-weight: 700;
+      color: var(--amber-400);
+    }
+    .user-info { flex: 1; min-width: 0; }
+    .user-name { font-size: 14px; font-weight: 500; color: var(--panel-ink-strong); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .user-role { font-size: 11px; color: var(--panel-ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .logout-btn {
+      padding: 8px; border-radius: 6px; color: var(--panel-ink);
+      background: none; border: none; cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+    }
+    .logout-btn:hover { background: rgb(255 255 255 / 0.06); color: var(--panel-ink-strong); }
+
+    /* Main */
+    .main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+    .header {
+      display: flex; align-items: center; gap: 12px;
+      border-bottom: 1px solid var(--edge);
+      background: var(--card);
+      padding: 10px 24px;
+    }
+    .header-title { }
+    .header-title h1 { font-family: 'Space Grotesk', sans-serif; font-size: 16px; font-weight: 700; letter-spacing: -0.02em; color: var(--ink); }
+    .header-title p { font-size: 11px; color: var(--muted); }
+    .search-bar {
+      flex: 1; display: flex; justify-content: center;
+    }
+    .search-btn {
+      display: flex; align-items: center; gap: 8px;
+      width: 100%; max-width: 400px;
+      background: var(--card-soft); border: 1px solid var(--edge);
+      border-radius: 6px; padding: 6px 12px;
+      font-size: 14px; color: var(--muted); cursor: default;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .search-btn:hover { border-color: var(--edge-strong); color: var(--ink-soft); }
+    .search-btn svg { width: 14px; height: 14px; }
+    .kbd {
+      display: none; align-items: center; gap: 2px;
+      border: 1px solid var(--edge); border-radius: 4px;
+      background: var(--card); padding: 2px 6px;
+      font-size: 10px; font-weight: 500; color: var(--muted);
+    }
+    @media (min-width: 640px) { .kbd { display: flex; } }
+    .header-actions { display: flex; align-items: center; gap: 8px; }
+    .icon-btn {
+      padding: 6px; border-radius: 6px; color: var(--ink-soft);
+      background: none; border: none; cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+    }
+    .icon-btn:hover { background: rgb(255 255 255 / 0.04); color: var(--ink); }
+    .role-badge {
+      display: none; align-items: center;
+      border: 1px solid var(--edge); border-radius: 999px;
+      background: var(--card-soft); padding: 4px 10px;
+      font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;
+      color: var(--ink-soft);
+    }
+    @media (min-width: 640px) { .role-badge { display: inline-flex; } }
+
+    .content { flex: 1; overflow-y: auto; }
+    .content-inner { max-width: 1280px; margin: 0 auto; padding: 20px 24px; }
+
+    /* Today strip */
+    .today-strip {
+      display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
+      border: 1px solid var(--edge); border-radius: 6px; opacity: 0.8;
+      background: var(--card); padding: 8px 12px; margin-bottom: 16px;
+    }
+    .today-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-right: 4px; }
+    .chip {
+      display: flex; align-items: center; gap: 6px;
+      background: var(--card-soft); border-radius: 999px;
+      padding: 4px 10px; font-size: 11px; font-weight: 500; color: var(--ink-soft);
+    }
+    .dot { width: 6px; height: 6px; border-radius: 999px; }
+
+    /* Range selector */
+    .range-bar {
+      display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-bottom: 20px;
+    }
+    .range-tabs {
+      display: flex; gap: 1px;
+      background: var(--card); border: 1px solid var(--edge); border-radius: 6px; padding: 4px;
+    }
+    .range-tab {
+      padding: 6px 12px; border-radius: 4px; font-size: 12px; font-weight: 500;
+      color: var(--ink-soft); cursor: pointer; transition: all 0.15s;
+    }
+    .range-tab.active { background: var(--brand); color: var(--on-brand); box-shadow: 0 2px 12px -2px var(--sh-glow); }
+    .range-tab:not(.active):hover { background: rgb(255 255 255 / 0.04); color: var(--ink); }
+    .range-filters { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+    .filter-select {
+      padding: 6px 10px; border-radius: 4px; font-size: 12px;
+      background: var(--card); border: 1px solid var(--edge);
+      color: var(--ink-soft); cursor: pointer;
+    }
+
+    /* KPI Grid */
+    .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 20px; }
+    .kpi-card {
+      border: 1px solid var(--edge); border-radius: 8px;
+      background: var(--card); padding: 16px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .kpi-card:hover { border-color: var(--edge-strong); box-shadow: 0 4px 12px -2px var(--sh-hover-a), 0 2px 4px 0 var(--sh-hover-b); }
+    .kpi-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+    .kpi-left { display: flex; align-items: center; gap: 12px; }
+    .kpi-icon {
+      width: 40px; height: 40px; border-radius: 6px;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .kpi-icon.green { background: rgb(34 197 94 / 0.15); color: var(--emerald-400); }
+    .kpi-icon.red { background: rgb(239 68 68 / 0.15); color: var(--red-400); }
+    .kpi-icon.cyan { background: rgb(6 182 212 / 0.15); color: var(--cyan-400); }
+    .kpi-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); }
+    .kpi-value { font-family: 'Space Grotesk', sans-serif; font-size: 24px; font-weight: 700; letter-spacing: -0.02em; color: var(--ink); }
+    .delta {
+      display: flex; align-items: center; gap: 3px;
+      padding: 2px 6px; border-radius: 4px;
+      font-size: 11px; font-weight: 600;
+    }
+    .delta.up { background: rgb(34 197 94 / 0.12); color: var(--emerald-400); }
+    .delta.down { background: rgb(239 68 68 / 0.12); color: var(--red-400); }
+    .sparkline { height: 32px; margin-top: 12px; display: flex; align-items: flex-end; gap: 2px; }
+    .spark-bar { width: 6px; border-radius: 2px 2px 0 0; }
+    .kpi-sub { font-size: 11px; color: var(--muted); margin-top: 8px; }
+
+    /* Chart grid */
+    .chart-grid { display: grid; gap: 20px; grid-template-columns: 2fr 1fr; }
+    .chart-grid .full-width { grid-column: 1 / -1; }
+    .chart-grid .span-2 { grid-column: 1 / 3; }
+    .card {
+      border: 1px solid var(--edge); border-radius: 8px;
+      background: var(--card); padding: 20px;
+    }
+    .card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+    .card-title { font-family: 'Space Grotesk', sans-serif; font-size: 14px; font-weight: 600; color: var(--ink); }
+    .card-subtitle { font-size: 11px; color: var(--muted); }
+    .card-action { display: flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 500; color: var(--amber-400); cursor: pointer; }
+    .card-action:hover { text-decoration: underline; }
+
+    /* Chart placeholder */
+    .chart-area { height: 280px; display: flex; align-items: flex-end; justify-content: center; gap: 8px; padding: 20px 0 0; }
+    .chart-area.small { height: 220px; }
+    .bar-group { display: flex; flex-direction: column; align-items: center; flex: 1; height: 100%; justify-content: flex-end; }
+    .bar-group .bars { display: flex; gap: 3px; width: 100%; justify-content: center; }
+    .bar-group label { font-size: 9px; color: var(--muted); margin-top: 6px; white-space: nowrap; }
+    .bar { width: 16px; border-radius: 3px 3px 0 0; }
+    .bar.green { background: var(--emerald-400); }
+    .bar.red { background: var(--red-400); }
+    .bar.blue { background: var(--sky-400); }
+
+    /* Donut */
+    .donut-area { display: flex; flex-direction: column; align-items: center; }
+    .donut { width: 160px; height: 160px; border-radius: 50%; position: relative; }
+    .donut-hole {
+      position: absolute; inset: 45px; border-radius: 50%;
+      background: var(--card);
+    }
+    .donut-legend { width: 100%; margin-top: 12px; }
+    .legend-item { display: flex; align-items: center; justify-content: space-between; padding: 4px 0; font-size: 12px; }
+    .legend-item .left { display: flex; align-items: center; gap: 8px; color: var(--ink-soft); }
+    .legend-swatch { width: 10px; height: 10px; border-radius: 3px; }
+    .legend-value { font-weight: 500; color: var(--ink); }
+
+    /* Leaderboard */
+    .leader-list { display: flex; flex-direction: column; gap: 12px; }
+    .leader-row { display: flex; align-items: center; gap: 12px; }
+    .leader-rank {
+      width: 28px; height: 28px; border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Space Grotesk', sans-serif; font-size: 11px; font-weight: 700; flex-shrink: 0;
+    }
+    .leader-rank.gold { background: var(--brand); color: var(--on-brand); }
+    .leader-rank.silver { background: rgb(255 255 255 / 0.05); color: var(--ink-soft); }
+    .leader-info { flex: 1; min-width: 0; }
+    .leader-name { font-size: 14px; font-weight: 500; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .leader-stats { font-size: 11px; color: var(--muted); }
+    .leader-profit { font-size: 14px; font-weight: 600; }
+
+    /* Active trips */
+    .trip-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .trip-card {
+      display: flex; align-items: center; gap: 12px;
+      border: 1px solid var(--edge); border-radius: 6px; opacity: 0.7;
+      background: var(--card-soft); padding: 10px 12px;
+    }
+    .trip-card svg { width: 16px; height: 16px; flex-shrink: 0; }
+    .trip-id { font-size: 14px; font-weight: 500; color: var(--ink); }
+    .trip-meta { font-size: 11px; color: var(--muted); }
+    .badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 2px 8px; border-radius: 999px;
+      font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;
+    }
+    .badge.amber { background: rgb(245 158 11 / 0.15); color: var(--amber-400); }
+    .badge.red { background: rgb(239 68 68 / 0.15); color: var(--red-400); }
+
+    .complete-all { display: flex; align-items: center; gap: 8px; padding: 24px 0; font-size: 12px; color: var(--muted); justify-content: center; }
+    .complete-all svg { width: 16px; height: 16px; color: var(--emerald-500); }
+
+    hr { border: none; border-top: 1px solid var(--edge); margin: 24px 0; }
+    .footer-note { text-align: center; font-size: 11px; color: var(--muted); padding: 8px 0 24px; }
+  </style>
+</head>
+<body>
+  <div class="app">
+
+    <!-- ===== SIDEBAR ===== -->
+    <aside class="sidebar">
+      <div class="brand-area">
+        <div class="brand">
+          <div class="brand-icon">🚛</div>
+          <div class="brand-text">
+            <h1>FastHaul Ops</h1>
+            <p>Fleet · Dispatch · Payroll</p>
+          </div>
+        </div>
+      </div>
+      <div class="hazard-divider"></div>
+
+      <nav class="nav">
+        <div class="nav-section">
+          <p class="nav-section-title">Operations</p>
+
+          <div class="nav-item active">
+            <span class="nav-indicator"></span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+            Dashboard
+          </div>
+
+          <div class="nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/><path d="M3 18h1V6a2 2 0 0 1 2-2h14"/><path d="M18 18V8H8"/></svg>
+            Trips
+          </div>
+
+          <div class="nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            Calendar
+          </div>
+
+          <div class="nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            Employees
+          </div>
+
+          <div class="nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.2 16 9.8 16 9.8"/><path d="M18 9a3 3 0 1 0 0-6"/><path d="M5 17v-3c0-.9.7-1.7 1.5-1.9C7.3 11.2 10 10.8 10 10.8"/><circle cx="9" cy="7" r="3"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/></svg>
+            Customers
+          </div>
+
+          <div class="nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            Diesel Calculator
+          </div>
+        </div>
+
+        <div class="nav-section">
+          <p class="nav-section-title" style="padding-top:16px">Administration</p>
+
+          <div class="nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+            Payroll
+          </div>
+
+          <div class="nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            Settings
+          </div>
+        </div>
+      </nav>
+
+      <div class="user-card">
+        <div class="user-card-inner">
+          <div class="avatar">E</div>
+          <div class="user-info">
+            <p class="user-name">Emil Kowalski</p>
+            <p class="user-role">Owner / Admin</p>
+          </div>
+          <button class="logout-btn" title="Sign out">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          </button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ===== MAIN ===== -->
+    <div class="main">
+
+      <!-- Header -->
+      <header class="header">
+        <div class="header-title">
+          <h1>Dashboard</h1>
+          <p>Financial overview of your operations</p>
+        </div>
+        <div class="search-bar">
+          <div class="search-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <span style="flex:1;text-align:left">Search trips, drivers, plates…</span>
+            <span class="kbd">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:10px;height:10px"><path d="M15 6v12a3 3 0 1 0 3-3H6a3 3 0 1 0 3 3V6a3 3 0 1 0-3 3h12a3 3 0 1 0-3-3"/></svg>
+              K
+            </span>
+          </div>
+        </div>
+        <div class="header-actions">
+          <button class="icon-btn" title="Switch to light mode">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+          </button>
+          <span class="role-badge">Owner</span>
+        </div>
+      </header>
+
+      <!-- Content -->
+      <div class="content">
+        <div class="content-inner">
+
+          <!-- Today strip -->
+          <div class="today-strip">
+            <span class="today-label">Today</span>
+            <span class="chip"><span class="dot" style="background:var(--sky-400)"></span>3 scheduled</span>
+            <span class="chip"><span class="dot" style="background:var(--amber-500)"></span>2 on the road</span>
+            <span class="chip"><span class="dot" style="background:var(--emerald-500)"></span>5 completed</span>
+          </div>
+
+          <!-- Range selector -->
+          <div class="range-bar">
+            <div class="range-tabs">
+              <span class="range-tab">Today</span>
+              <span class="range-tab active">This Week</span>
+              <span class="range-tab">This Month</span>
+              <span class="range-tab">This Quarter</span>
+              <span class="range-tab">This Year</span>
+            </div>
+            <div class="range-filters">
+              <span class="filter-select">All vehicle types ▼</span>
+              <span class="filter-select">All drivers ▼</span>
+            </div>
+          </div>
+
+          <!-- KPI Cards -->
+          <div class="kpi-grid">
+            <div class="kpi-card">
+              <div class="kpi-top">
+                <div class="kpi-left">
+                  <div class="kpi-icon green">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px"><circle cx="8" cy="8" r="6"/><path d="M18.09 10.37A6 6 0 1 1 10.34 18"/><path d="M7 6h1v4"/><path d="M16.2 7.8l2.3 2.3"/></svg>
+                  </div>
+                  <div>
+                    <p class="kpi-label">Total Gross</p>
+                    <p class="kpi-value">₱184,250</p>
+                  </div>
+                </div>
+                <span class="delta up">▲ 12.5%</span>
+              </div>
+              <div class="sparkline">
+                <div class="spark-bar" style="height:16px;background:var(--emerald-400)"></div>
+                <div class="spark-bar" style="height:22px;background:var(--emerald-400)"></div>
+                <div class="spark-bar" style="height:12px;background:var(--emerald-400)"></div>
+                <div class="spark-bar" style="height:28px;background:var(--emerald-400)"></div>
+                <div class="spark-bar" style="height:20px;background:var(--emerald-400)"></div>
+                <div class="spark-bar" style="height:32px;background:var(--emerald-400)"></div>
+                <div class="spark-bar" style="height:18px;background:var(--emerald-400)"></div>
+              </div>
+            </div>
+
+            <div class="kpi-card">
+              <div class="kpi-top">
+                <div class="kpi-left">
+                  <div class="kpi-icon red">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
+                  </div>
+                  <div>
+                    <p class="kpi-label">Total Expense</p>
+                    <p class="kpi-value">₱67,480</p>
+                  </div>
+                </div>
+                <span class="delta up">▲ 4.2%</span>
+              </div>
+              <div class="sparkline">
+                <div class="spark-bar" style="height:14px;background:var(--red-400)"></div>
+                <div class="spark-bar" style="height:18px;background:var(--red-400)"></div>
+                <div class="spark-bar" style="height:10px;background:var(--red-400)"></div>
+                <div class="spark-bar" style="height:24px;background:var(--red-400)"></div>
+                <div class="spark-bar" style="height:16px;background:var(--red-400)"></div>
+                <div class="spark-bar" style="height:28px;background:var(--red-400)"></div>
+                <div class="spark-bar" style="height:20px;background:var(--red-400)"></div>
+              </div>
+            </div>
+
+            <div class="kpi-card">
+              <div class="kpi-top">
+                <div class="kpi-left">
+                  <div class="kpi-icon green">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+                  </div>
+                  <div>
+                    <p class="kpi-label">Total Profit</p>
+                    <p class="kpi-value">₱116,770</p>
+                  </div>
+                </div>
+                <span class="delta up">▲ 18.3%</span>
+              </div>
+              <div class="sparkline">
+                <div class="spark-bar" style="height:20px;background:#2dd4bf"></div>
+                <div class="spark-bar" style="height:28px;background:#2dd4bf"></div>
+                <div class="spark-bar" style="height:14px;background:#2dd4bf"></div>
+                <div class="spark-bar" style="height:32px;background:#2dd4bf"></div>
+                <div class="spark-bar" style="height:24px;background:#2dd4bf"></div>
+                <div class="spark-bar" style="height:36px;background:#2dd4bf"></div>
+                <div class="spark-bar" style="height:22px;background:#2dd4bf"></div>
+              </div>
+              <p class="kpi-sub">avg ₱8,340 / trip</p>
+            </div>
+
+            <div class="kpi-card">
+              <div class="kpi-top">
+                <div class="kpi-left">
+                  <div class="kpi-icon cyan">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px"><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/><path d="M3 18h1V6a2 2 0 0 1 2-2h14"/><path d="M18 18V8H8"/></svg>
+                  </div>
+                  <div>
+                    <p class="kpi-label">Total Trips</p>
+                    <p class="kpi-value">14</p>
+                  </div>
+                </div>
+                <span class="delta down">▼ 2.1%</span>
+              </div>
+              <div class="sparkline">
+                <div class="spark-bar" style="height:8px;background:var(--sky-400)"></div>
+                <div class="spark-bar" style="height:16px;background:var(--sky-400)"></div>
+                <div class="spark-bar" style="height:12px;background:var(--sky-400)"></div>
+                <div class="spark-bar" style="height:20px;background:var(--sky-400)"></div>
+                <div class="spark-bar" style="height:6px;background:var(--sky-400)"></div>
+                <div class="spark-bar" style="height:24px;background:var(--sky-400)"></div>
+                <div class="spark-bar" style="height:14px;background:var(--sky-400)"></div>
+              </div>
+              <p class="kpi-sub">2 cancelled</p>
+            </div>
+          </div>
+
+          <!-- Charts Row 1 -->
+          <div class="chart-grid">
+            <!-- Income vs Expense -->
+            <div class="card" style="grid-column:span 2">
+              <div class="card-header">
+                <div>
+                  <p class="card-title">Income vs Expense</p>
+                  <p class="card-subtitle">This Week</p>
+                </div>
+              </div>
+              <div class="chart-area">
+                <div class="bar-group"><div class="bars"><div class="bar green" style="height:70%"></div><div class="bar red" style="height:30%"></div></div><label>Mon</label></div>
+                <div class="bar-group"><div class="bars"><div class="bar green" style="height:85%"></div><div class="bar red" style="height:25%"></div></div><label>Tue</label></div>
+                <div class="bar-group"><div class="bars"><div class="bar green" style="height:60%"></div><div class="bar red" style="height:40%"></div></div><label>Wed</label></div>
+                <div class="bar-group"><div class="bars"><div class="bar green" style="height:90%"></div><div class="bar red" style="height:20%"></div></div><label>Thu</label></div>
+                <div class="bar-group"><div class="bars"><div class="bar green" style="height:75%"></div><div class="bar red" style="height:35%"></div></div><label>Fri</label></div>
+                <div class="bar-group"><div class="bars"><div class="bar green" style="height:50%"></div><div class="bar red" style="height:45%"></div></div><label>Sat</label></div>
+                <div class="bar-group"><div class="bars"><div class="bar green" style="height:65%"></div><div class="bar red" style="height:28%"></div></div><label>Sun</label></div>
+              </div>
+            </div>
+
+            <!-- Donut: Vehicle Type -->
+            <div class="card">
+              <div class="card-header">
+                <div>
+                  <p class="card-title">Gross by Vehicle Type</p>
+                  <p class="card-subtitle">Share of gross revenue</p>
+                </div>
+              </div>
+              <div class="donut-area">
+                <div class="donut" style="background:conic-gradient(#fbbf24 0% 40%, #38bdf8 40% 65%, #34d399 65% 82%, #a78bfa 82% 100%)">
+                  <div class="donut-hole"></div>
+                </div>
+                <div class="donut-legend">
+                  <div class="legend-item"><span class="left"><span class="legend-swatch" style="background:#fbbf24"></span>L300 FB</span><span class="legend-value">₱73,700</span></div>
+                  <div class="legend-item"><span class="left"><span class="legend-swatch" style="background:#38bdf8"></span>Closed Van</span><span class="legend-value">₱48,000</span></div>
+                  <div class="legend-item"><span class="left"><span class="legend-swatch" style="background:#34d399"></span>Wing Van</span><span class="legend-value">₱32,550</span></div>
+                  <div class="legend-item"><span class="left"><span class="legend-swatch" style="background:#a78bfa"></span>Fuso</span><span class="legend-value">₱30,000</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Charts Row 2 -->
+          <div class="chart-grid" style="margin-top:20px">
+            <!-- Profit Trend -->
+            <div class="card" style="grid-column:span 2">
+              <div class="card-header">
+                <div>
+                  <p class="card-title">Profit Trend</p>
+                  <p class="card-subtitle">Profit over selected period</p>
+                </div>
+              </div>
+              <div class="chart-area">
+                <div class="bar-group"><div class="bars"><div class="bar" style="height:55%;background:#2dd4bf"></div></div><label>Mon</label></div>
+                <div class="bar-group"><div class="bars"><div class="bar" style="height:72%;background:#2dd4bf"></div></div><label>Tue</label></div>
+                <div class="bar-group"><div class="bars"><div class="bar" style="height:40%;background:#2dd4bf"></div></div><label>Wed</label></div>
+                <div class="bar-group"><div class="bars"><div class="bar" style="height:88%;background:#2dd4bf"></div></div><label>Thu</label></div>
+                <div class="bar-group"><div class="bars"><div class="bar" style="height:60%;background:#2dd4bf"></div></div><label>Fri</label></div>
+                <div class="bar-group"><div class="bars"><div class="bar" style="height:30%;background:#2dd4bf"></div></div><label>Sat</label></div>
+                <div class="bar-group"><div class="bars"><div class="bar" style="height:50%;background:#2dd4bf"></div></div><label>Sun</label></div>
+              </div>
+            </div>
+
+            <!-- Donut: Expense -->
+            <div class="card">
+              <div class="card-header">
+                <div>
+                  <p class="card-title">Expense Breakdown</p>
+                  <p class="card-subtitle">By category</p>
+                </div>
+              </div>
+              <div class="donut-area">
+                <div class="donut" style="background:conic-gradient(#fbbf24 0% 35%, #38bdf8 35% 55%, #34d399 55% 70%, #a78bfa 70% 85%, #f472b6 85% 100%)">
+                  <div class="donut-hole"></div>
+                </div>
+                <div class="donut-legend">
+                  <div class="legend-item"><span class="left"><span class="legend-swatch" style="background:#fbbf24"></span>Diesel</span><span class="legend-value">₱23,540</span></div>
+                  <div class="legend-item"><span class="left"><span class="legend-swatch" style="background:#38bdf8"></span>Toll</span><span class="legend-value">₱13,200</span></div>
+                  <div class="legend-item"><span class="left"><span class="legend-swatch" style="background:#34d399"></span>Loading/Unloading</span><span class="legend-value">₱10,500</span></div>
+                  <div class="legend-item"><span class="left"><span class="legend-swatch" style="background:#a78bfa"></span>Parking</span><span class="legend-value">₱8,240</span></div>
+                  <div class="legend-item"><span class="left"><span class="legend-swatch" style="background:#f472b6"></span>Misc</span><span class="legend-value">₱12,000</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Charts Row 3 -->
+          <div class="chart-grid" style="margin-top:20px">
+            <!-- Trip Volume -->
+            <div class="card" style="grid-column:span 2">
+              <div class="card-header">
+                <div>
+                  <p class="card-title">Trip Volume</p>
+                  <p class="card-subtitle">Trips over selected period</p>
+                </div>
+              </div>
+              <div class="chart-area small">
+                <div class="bar-group"><div class="bars"><div class="bar blue" style="height:40%"></div></div><label>Mon</label></div>
+                <div class="bar-group"><div class="bars"><div class="bar blue" style="height:60%"></div></div><label>Tue</label></div>
+                <div class="bar-group"><div class="bars"><div class="bar blue" style="height:30%"></div></div><label>Wed</label></div>
+                <div class="bar-group"><div class="bars"><div class="bar blue" style="height:80%"></div></div><label>Thu</label></div>
+                <div class="bar-group"><div class="bars"><div class="bar blue" style="height:50%"></div></div><label>Fri</label></div>
+                <div class="bar-group"><div class="bars"><div class="bar blue" style="height:20%"></div></div><label>Sat</label></div>
+                <div class="bar-group"><div class="bars"><div class="bar blue" style="height:45%"></div></div><label>Sun</label></div>
+              </div>
+            </div>
+
+            <!-- Top Drivers -->
+            <div class="card">
+              <div class="card-header">
+                <div>
+                  <p class="card-title">Top Drivers</p>
+                  <p class="card-subtitle">By profit generated</p>
+                </div>
+                <span class="card-action">Payroll →</span>
+              </div>
+              <div class="leader-list">
+                <div class="leader-row">
+                  <span class="leader-rank gold">1</span>
+                  <div class="leader-info">
+                    <p class="leader-name">Juan Dela Cruz</p>
+                    <p class="leader-stats">4 trips · ₱45,000 gross</p>
+                  </div>
+                  <span class="leader-profit" style="color:var(--emerald-400)">₱28,500</span>
+                </div>
+                <div class="leader-row">
+                  <span class="leader-rank silver">2</span>
+                  <div class="leader-info">
+                    <p class="leader-name">Pedro Santos</p>
+                    <p class="leader-stats">3 trips · ₱38,250 gross</p>
+                  </div>
+                  <span class="leader-profit" style="color:var(--emerald-400)">₱24,100</span>
+                </div>
+                <div class="leader-row">
+                  <span class="leader-rank silver">3</span>
+                  <div class="leader-info">
+                    <p class="leader-name">Michael Reyes</p>
+                    <p class="leader-stats">3 trips · ₱32,000 gross</p>
+                  </div>
+                  <span class="leader-profit" style="color:var(--emerald-400)">₱21,800</span>
+                </div>
+                <div class="leader-row">
+                  <span class="leader-rank silver">4</span>
+                  <div class="leader-info">
+                    <p class="leader-name">Ramon Garcia</p>
+                    <p class="leader-stats">2 trips · ₱28,000 gross</p>
+                  </div>
+                  <span class="leader-profit" style="color:var(--emerald-400)">₱18,450</span>
+                </div>
+                <div class="leader-row">
+                  <span class="leader-rank silver">5</span>
+                  <div class="leader-info">
+                    <p class="leader-name">Carlos Mendoza</p>
+                    <p class="leader-stats">2 trips · ₱22,000 gross</p>
+                  </div>
+                  <span class="leader-profit" style="color:var(--emerald-400)">₱15,220</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Active & Delayed -->
+          <div class="card" style="margin-top:20px">
+            <div class="card-header">
+              <div>
+                <p class="card-title">Active & Delayed</p>
+                <p class="card-subtitle">Non-completed trips in period</p>
+              </div>
+            </div>
+            <div class="trip-grid">
+              <div class="trip-card">
+                <svg viewBox="0 0 24 24" fill="none" stroke="var(--amber-500)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                <div>
+                  <p class="trip-id">TRP-2024-0842</p>
+                  <p class="trip-meta">Juan D. · 2:30 PM</p>
+                </div>
+                <span class="badge amber" style="margin-left:auto">● Ongoing</span>
+              </div>
+              <div class="trip-card">
+                <svg viewBox="0 0 24 24" fill="none" stroke="var(--amber-500)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                <div>
+                  <p class="trip-id">TRP-2024-0845</p>
+                  <p class="trip-meta">Pedro S. · 4:15 PM</p>
+                </div>
+                <span class="badge amber" style="margin-left:auto">● Ongoing</span>
+              </div>
+              <div class="trip-card">
+                <svg viewBox="0 0 24 24" fill="none" stroke="var(--red-500)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+                <div>
+                  <p class="trip-id">TRP-2024-0839</p>
+                  <p class="trip-meta">Michael R. · 10:00 AM</p>
+                </div>
+                <span class="badge red" style="margin-left:auto">● Cancelled</span>
+              </div>
+            </div>
+          </div>
+
+          <hr />
+          <p class="footer-note">FastHaul Ops · Trucking Management System · Built with React + TypeScript + Tailwind CSS</p>
+
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // ===== Light / Dark theme toggle =====
+    (function() {
+      const html = document.documentElement;
+      const btn = document.querySelector('.icon-btn');
+      let dark = html.classList.contains('dark');
+
+      btn.addEventListener('click', function() {
+        dark = !dark;
+        html.classList.toggle('dark', dark);
+        html.classList.toggle('light', !dark);
+        btn.title = dark ? 'Switch to light mode' : 'Switch to dark mode';
+        // Swap sun/moon icon
+        btn.innerHTML = dark
+          ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>'
+          : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
+      });
+    })();
+
+    // ===== Sidebar navigation =====
+    const navItems = document.querySelectorAll('.nav-item');
+    const pageTitles = {
+      'Dashboard': 'Financial overview of your operations',
+      'Trips': 'Log and manage all Transportify bookings',
+      'Calendar': 'Trip and profit overview by day',
+      'Employees': 'Drivers, helpers and office staff',
+      'Customers': 'Auto-tracked from trip phone numbers',
+      'Diesel Calculator': 'Compute driver & helper salary deductions',
+      'Payroll': 'Driver and helper earnings by period',
+      'Settings': 'Company profile, vehicle types, commission rules'
+    };
+
+    navItems.forEach(item => {
+      item.addEventListener('click', function() {
+        navItems.forEach(n => n.classList.remove('active'));
+        this.classList.add('active');
+        const name = this.textContent.trim();
+        const h1 = document.querySelector('.header-title h1');
+        const p = document.querySelector('.header-title p');
+        if (h1) h1.textContent = name;
+        if (p) p.textContent = pageTitles[name] || 'Overview';
+      });
+    });
+
+    // ===== Range tabs =====
+    const rangeTabs = document.querySelectorAll('.range-tab');
+    const chartSubtitles = document.querySelectorAll('.card-subtitle');
+    // specific chart subtitle overrides
+    const subtitleOverrides = {
+      0: 'This Week',    // Income vs Expense
+      1: 'Share of gross revenue',
+      2: 'Profit over selected period',
+      3: 'By category',
+      4: 'Trips over selected period',
+      5: 'By profit generated'
+    };
+
+    rangeTabs.forEach(tab => {
+      tab.addEventListener('click', function() {
+        rangeTabs.forEach(t => t.classList.remove('active'));
+        this.classList.add('active');
+        const label = this.textContent.trim();
+        // Update all generic "This Week" / "This Month" subtitles
+        chartSubtitles.forEach((el, i) => {
+          const current = el.textContent.trim();
+          if (['Today', 'This Week', 'This Month', 'This Quarter', 'This Year'].includes(current)) {
+            el.textContent = label;
+          }
+        });
+      });
+    });
+
+    // ===== Filter selects (simple toggle) =====
+    const filterSelects = document.querySelectorAll('.filter-select');
+    let filterCycle = 0;
+    const filterOptions = [
+      ['All vehicle types ▼', 'All drivers ▼'],
+      ['L300 FB ▼', 'Juan D. ▼'],
+      ['Closed Van ▼', 'Pedro S. ▼'],
+      ['Wing Van ▼', 'Michael R. ▼'],
+    ];
+
+    filterSelects.forEach((sel, i) => {
+      sel.addEventListener('click', function() {
+        // cycle through options
+        const current = this.textContent.trim();
+        const opts = filterOptions.map(o => o[i]);
+        const idx = opts.indexOf(current);
+        const next = opts[(idx + 1) % opts.length];
+        this.textContent = next;
+      });
+    });
+
+    // ===== Search button → show quick modal =====
+    const searchBtn = document.querySelector('.search-btn');
+    let searchModal = null;
+
+    searchBtn.addEventListener('click', function() {
+      if (searchModal) { searchModal.remove(); searchModal = null; return; }
+
+      searchModal = document.createElement('div');
+      searchModal.style.cssText = `
+        position: fixed; inset: 0; z-index: 100;
+        display: flex; align-items: flex-start; justify-content: center;
+        background: rgba(0,0,0,0.5); backdrop-filter: blur(4px);
+        padding: 10vh 16px 0;
+      `;
+      searchModal.innerHTML = `
+        <div style="width:100%;max-width:560px;background:var(--card);border:1px solid var(--edge);border-radius:8px;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,0.4)">
+          <div style="display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--edge);padding:0 16px">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0;color:var(--muted)"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input id="search-input" type="text" placeholder="Search trips, drivers, plates, customers, pages…"
+              style="width:100%;background:transparent;border:none;padding:14px 0;font-size:14px;color:var(--ink);outline:none;font-family:inherit">
+          </div>
+          <div style="padding:6px;max-height:240px;overflow-y:auto">
+            ${['Dashboard', 'Trips', 'Calendar', 'Employees', 'Customers', 'Payroll'].map(p => `
+              <div class="search-result" data-page="${p}"
+                style="display:flex;align-items:center;gap:12px;padding:8px 12px;border-radius:6px;cursor:pointer;transition:background 0.1s">
+                <span style="width:48px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted)">Page</span>
+                <span style="font-size:14px;font-weight:500;color:var(--ink)">${p}</span>
+                <span style="margin-left:auto;font-size:10px;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted)">→ ${p.toLowerCase()}</span>
+              </div>
+            `).join('')}
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;border-top:1px solid var(--edge);padding:8px 16px;font-size:10px;color:var(--muted)">
+            <span><kbd style="border:1px solid var(--edge);border-radius:3px;padding:1px 5px;font-family:inherit">↑↓</kbd> navigate</span>
+            <span><kbd style="border:1px solid var(--edge);border-radius:3px;padding:1px 5px;font-family:inherit">↵</kbd> open</span>
+            <span><kbd id="esc-search" style="border:1px solid var(--edge);border-radius:3px;padding:1px 5px;font-family:inherit">esc</kbd> close</span>
+            <span style="margin-left:auto;font-weight:600;letter-spacing:0.05em">⌘K search</span>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(searchModal);
+
+      // Focus input
+      setTimeout(() => {
+        const inp = document.getElementById('search-input');
+        if (inp) inp.focus();
+      }, 50);
+
+      // Click outside to close
+      searchModal.addEventListener('click', function(e) {
+        if (e.target === this) { this.remove(); searchModal = null; }
+      });
+
+      // Escape to close
+      const inp = document.getElementById('search-input');
+      if (inp) {
+        inp.addEventListener('keydown', function(e) {
+          if (e.key === 'Escape') { searchModal.remove(); searchModal = null; }
+        });
+      }
+
+      // Click a result → navigate
+      searchModal.querySelectorAll('.search-result').forEach(r => {
+        r.addEventListener('click', function() {
+          const page = this.dataset.page;
+          // Navigate sidebar
+          navItems.forEach(n => {
+            n.classList.toggle('active', n.textContent.trim() === page);
+          });
+          const h1 = document.querySelector('.header-title h1');
+          const p = document.querySelector('.header-title p');
+          if (h1) h1.textContent = page;
+          if (p) p.textContent = pageTitles[page] || 'Overview';
+          searchModal.remove();
+          searchModal = null;
+        });
+        r.addEventListener('mouseenter', function() {
+          this.style.background = 'var(--brand-soft)';
+        });
+        r.addEventListener('mouseleave', function() {
+          this.style.background = 'transparent';
+        });
+      });
+    });
+
+    // ===== Payroll card action → navigate sidebar =====
+    document.querySelector('.card-action')?.addEventListener('click', function() {
+      navItems.forEach(n => n.classList.remove('active'));
+      const payrollItem = Array.from(navItems).find(n => n.textContent.trim() === 'Payroll');
+      if (payrollItem) {
+        payrollItem.classList.add('active');
+        const h1 = document.querySelector('.header-title h1');
+        const p = document.querySelector('.header-title p');
+        if (h1) h1.textContent = 'Payroll';
+        if (p) p.textContent = pageTitles['Payroll'] || 'Overview';
+      }
+    });
+
+    // ===== Logout button → toast =====
+    document.querySelector('.logout-btn')?.addEventListener('click', function() {
+      const toast = document.createElement('div');
+      toast.textContent = '🔓 Signed out (demo)';
+      toast.style.cssText = `
+        position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+        background: var(--card); border: 1px solid var(--edge);
+        padding: 10px 20px; border-radius: 8px;
+        font-size: 14px; font-weight: 500; color: var(--ink);
+        box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+        z-index: 200; transition: opacity 0.3s;
+      `;
+      document.body.appendChild(toast);
+      setTimeout(() => { toast.style.opacity = '0'; }, 1500);
+      setTimeout(() => toast.remove(), 2000);
+    });
+  </script>
+</body>
+</html>

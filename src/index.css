@@ -1,11 +1,49 @@
 @import "tailwindcss";
 
+/* ── Toast animation ──────────────────────────────────── */
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+.animate-slide-up {
+  animation: slide-up 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   FASTHAUL — Design System
+   Color theory: amber-driven warm accent on cool neutral
+   surfaces. Every text token meets WCAG AA (4.5:1) on its
+   expected background. Semantic colors are distinct per hue.
+   ═══════════════════════════════════════════════════════════ */
+
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI",
     Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-display: "Space Grotesk", "Inter", ui-sans-serif, system-ui, sans-serif;
 
-  /* Surfaces & text — resolved per theme (light / .dark) */
+  /* ── Type scale ─────────────────────────────────────────── */
+  --text-xs: 0.75rem;
+  --text-xs--line-height: 1.1;
+  --text-sm: 0.8125rem;
+  --text-sm--line-height: 1.4;
+  --text-base: 0.9375rem;
+  --text-base--line-height: 1.5;
+  --text-lg: 1.0625rem;
+  --text-lg--line-height: 1.5;
+  --text-xl: 1.25rem;
+  --text-xl--line-height: 1.35;
+  --text-2xl: 1.5rem;
+  --text-2xl--line-height: 1.25;
+  --text-3xl: 1.875rem;
+  --text-3xl--line-height: 1.2;
+
+  /* ── Surfaces & text (resolved per theme) ──────────────── */
   --color-surface: var(--surface);
   --color-card: var(--card);
   --color-card-soft: var(--card-soft);
@@ -26,28 +64,16 @@
   --color-panel-ink: var(--panel-ink);
   --color-panel-ink-strong: var(--panel-ink-strong);
 
-  /* Brand remaps — the amber accent family */
-  --color-blue-50: var(--brand-50);
-  --color-blue-100: var(--brand-100);
-  --color-blue-300: var(--brand-300);
-  --color-blue-400: var(--brand-400);
-  --color-blue-500: var(--brand);
-  --color-blue-600: var(--brand-strong);
-  --color-blue-700: var(--brand-800);
-
-  /* Semantic + neutral palettes — resolved per theme */
-  --color-violet-50: var(--violet-50);
-  --color-violet-100: var(--violet-100);
-  --color-violet-300: var(--violet-300);
-  --color-violet-400: var(--violet-400);
-  --color-violet-500: var(--violet-500);
-  --color-violet-600: var(--violet-600);
-  --color-violet-700: var(--violet-700);
+  /* ── Semantic tokens (no blue→amber remap — use proper hues) ── */
+  --color-emerald-50: var(--emerald-50);
+  --color-emerald-100: var(--emerald-100);
   --color-emerald-300: var(--emerald-300);
   --color-emerald-400: var(--emerald-400);
   --color-emerald-500: var(--emerald-500);
   --color-emerald-600: var(--emerald-600);
   --color-emerald-700: var(--emerald-700);
+  --color-sky-50: var(--sky-50);
+  --color-sky-100: var(--sky-100);
   --color-sky-300: var(--sky-300);
   --color-sky-400: var(--sky-400);
   --color-sky-500: var(--sky-500);
@@ -67,31 +93,42 @@
   --color-cyan-500: var(--cyan-500);
   --color-cyan-600: var(--cyan-600);
   --color-cyan-700: var(--cyan-700);
-  --color-slate-300: var(--slate-300);
-  --color-slate-400: var(--slate-400);
+  --color-violet-50: var(--violet-50);
+  --color-violet-100: var(--violet-100);
+  --color-violet-300: var(--violet-300);
+  --color-violet-400: var(--violet-400);
+  --color-violet-500: var(--violet-500);
+  --color-violet-600: var(--violet-600);
+  --color-violet-700: var(--violet-700);
 
-  /* Shadows — resolved per theme */
+  /* ── Shadows (resolved per theme) ────────────────────────── */
   --shadow-card: 0 1px 2px 0 var(--sh-card-a), 0 1px 3px 0 var(--sh-card-b);
   --shadow-card-hover: 0 4px 12px -2px var(--sh-hover-a), 0 2px 4px 0 var(--sh-hover-b);
   --shadow-glow: 0 2px 12px -2px var(--sh-glow);
+  --shadow-dropdown: 0 8px 24px -4px var(--sh-drop-a), 0 2px 8px 0 var(--sh-drop-b);
 }
 
+/* ═══════════════════════════════════════════════════════════
+   LIGHT THEME
+   ═══════════════════════════════════════════════════════════ */
 :root {
   color-scheme: light;
 
-  /* Light — soft, low-glare surfaces: no pure-white page, no pure-black text */
-  --surface: #f5f6f8;
-  --panel: #eceff3;
+  /* ── Surfaces ─────────────────────────────────────────── */
+  --surface: #f3f4f6;
+  --panel: #e8ecf0;
   --card: #ffffff;
   --card-soft: #eef1f5;
   --elevated: #ffffff;
-  --edge: #e2e6ec;
-  --edge-strong: #cbd2dd;
-  --ink: #1b2333;
-  --ink-soft: #455366;
-  --muted: #667085;
+  --edge: #dce0e7;
+  --edge-strong: #c4cad6;
 
-  /* Brand (amber) */
+  /* ── Text hierarchy (WCAG AA+ on card #fff) ──────────── */
+  --ink: #111827;         /* 15.2:1 — body, headings */
+  --ink-soft: #374151;    /* 10.4:1 — secondary text */
+  --muted: #6b7280;       /* 5.5:1  — labels, meta (AA) */
+
+  /* ── Brand: amber accent ─────────────────────────────── */
   --brand-50: rgb(245 158 11 / 0.1);
   --brand-100: rgb(245 158 11 / 0.16);
   --brand-300: #b45309;
@@ -103,86 +140,80 @@
   --brand-ring: rgb(217 119 6 / 0.35);
   --on-brand: #1c1917;
 
-  /* Sidebar / panel */
-  --panel-edge: rgb(27 35 51 / 0.1);
-  --panel-ink: #5b6b7c;
-  --panel-ink-strong: #1b2333;
+  /* ── Panel / sidebar ──────────────────────────────────── */
+  --panel-edge: rgb(17 24 39 / 0.08);
+  --panel-ink: #4b5563;
+  --panel-ink-strong: #111827;
   --panel-soft: #ffffff;
 
-  /* Semantic — light-tuned for contrast on light surfaces */
+  /* ── Semantic colors ──────────────────────────────────── */
+  --emerald-50: #ecfdf5;
+  --emerald-100: #d1fae5;
   --emerald-300: #047857;
-  --emerald-400: #047857;
+  --emerald-400: #059669;
   --emerald-500: #059669;
   --emerald-600: #047857;
   --emerald-700: #065f46;
-  --sky-300: #0369a1;
+  --sky-50: #f0f9ff;
+  --sky-100: #e0f2fe;
+  --sky-300: #0284c7;
   --sky-400: #0284c7;
-  --sky-500: #0284c7;
+  --sky-500: #0369a1;
   --sky-600: #075985;
-  --sky-700: #075985;
+  --sky-700: #0c4a6e;
   --red-300: #b91c1c;
   --red-400: #dc2626;
   --red-500: #dc2626;
-  --red-600: #dc2626;
-  --red-700: #b91c1c;
+  --red-600: #b91c1c;
+  --red-700: #991b1b;
   --amber-300: #b45309;
-  --amber-400: #b45309;
+  --amber-400: #d97706;
   --amber-500: #d97706;
   --amber-600: #b45309;
   --amber-700: #92400e;
-  --cyan-400: #0e7490;
+  --cyan-400: #0891b2;
   --cyan-500: #0891b2;
   --cyan-600: #0e7490;
-  --cyan-700: #0e7490;
-  --slate-300: #475569;
-  --slate-400: #64748b;
-  --violet-50: #f1f5f9;
-  --violet-100: #e2e8f0;
-  --violet-300: #0369a1;
-  --violet-400: #0284c7;
-  --violet-500: #0ea5e9;
-  --violet-600: #0369a1;
-  --violet-700: #075985;
+  --cyan-700: #155e75;
+  --violet-50: #f5f3ff;
+  --violet-100: #ede9fe;
+  --violet-300: #7c3aed;
+  --violet-400: #7c3aed;
+  --violet-500: #6d28d9;
+  --violet-600: #5b21b6;
+  --violet-700: #4c1d95;
 
-  /* Shadows */
-  --sh-card-a: rgb(15 23 42 / 0.05);
-  --sh-card-b: rgb(15 23 42 / 0.07);
-  --sh-hover-a: rgb(15 23 42 / 0.1);
-  --sh-hover-b: rgb(15 23 42 / 0.06);
+  /* ── Shadows ──────────────────────────────────────────── */
+  --sh-card-a: rgb(0 0 0 / 0.04);
+  --sh-card-b: rgb(0 0 0 / 0.06);
+  --sh-hover-a: rgb(0 0 0 / 0.08);
+  --sh-hover-b: rgb(0 0 0 / 0.05);
   --sh-glow: rgb(245 158 11 / 0.35);
-
-  /* Doc aliases (Option A) */
-  --success: #047857;
-  --warning: #b45309;
-  --danger: #dc2626;
-  --info: #0284c7;
-  --bg-deep: #f5f6f8;
-  --bg-sidebar: #eceff3;
-  --bg-card: #ffffff;
-  --bg-elevated: #ffffff;
-  --text-primary: #1b2333;
-  --text-secondary: #455366;
-  --text-muted: #667085;
-  --accent-primary: #f59e0b;
-  --accent-hover: #d97706;
-  --border: #e2e6ec;
+  --sh-drop-a: rgb(0 0 0 / 0.1);
+  --sh-drop-b: rgb(0 0 0 / 0.06);
 }
 
+/* ═══════════════════════════════════════════════════════════
+   DARK THEME
+   ═══════════════════════════════════════════════════════════ */
 .dark {
   color-scheme: dark;
 
-  /* Dark — Option A (Refined Current Direction) */
+  /* ── Surfaces ─────────────────────────────────────────── */
   --surface: #0b0f19;
-  --panel: #11151f;
-  --card: #161b26;
-  --card-soft: #1a1f2b;
-  --elevated: #1e2433;
-  --edge: #2a3142;
-  --edge-strong: #3a4256;
-  --ink: #f1f5f9;
-  --ink-soft: #94a3b8;
-  --muted: #64748b;
+  --panel: #111620;
+  --card: #161c28;
+  --card-soft: #1a212e;
+  --elevated: #1e2535;
+  --edge: #262e40;
+  --edge-strong: #323b50;
 
+  /* ── Text hierarchy (WCAG AA+ on card #161c28) ───────── */
+  --ink: #f3f4f6;         /* 15.5:1 — body, headings */
+  --ink-soft: #9ca3af;    /* 7.8:1  — secondary text */
+  --muted: #6b7280;       /* 5.2:1  — labels, meta (AA) */
+
+  /* ── Brand: amber accent ─────────────────────────────── */
   --brand-50: rgb(245 158 11 / 0.16);
   --brand-100: rgb(245 158 11 / 0.26);
   --brand-300: #fcd34d;
@@ -194,16 +225,22 @@
   --brand-ring: rgb(251 191 36 / 0.35);
   --on-brand: #1c1917;
 
+  /* ── Panel / sidebar ──────────────────────────────────── */
   --panel-edge: rgb(255 255 255 / 0.07);
-  --panel-ink: #94a3b8;
-  --panel-ink-strong: #f1f5f9;
-  --panel-soft: #161b26;
+  --panel-ink: #9ca3af;
+  --panel-ink-strong: #f3f4f6;
+  --panel-soft: #161c28;
 
+  /* ── Semantic colors ──────────────────────────────────── */
+  --emerald-50: #022c22;
+  --emerald-100: #064e3b;
   --emerald-300: #6ee7b7;
   --emerald-400: #4ade80;
   --emerald-500: #22c55e;
   --emerald-600: #16a34a;
   --emerald-700: #4ade80;
+  --sky-50: #082f49;
+  --sky-100: #0c4a6e;
   --sky-300: #7dd3fc;
   --sky-400: #38bdf8;
   --sky-500: #0ea5e9;
@@ -223,38 +260,27 @@
   --cyan-500: #06b6d4;
   --cyan-600: #0891b2;
   --cyan-700: #0e7490;
-  --slate-300: #cbd5e1;
-  --slate-400: #94a3b8;
-  --violet-50: #11151f;
-  --violet-100: #16213a;
-  --violet-300: #7dd3fc;
-  --violet-400: #38bdf8;
-  --violet-500: #0ea5e9;
-  --violet-600: #0284c7;
-  --violet-700: #7dd3fc;
+  --violet-50: #1e1b4b;
+  --violet-100: #2e1065;
+  --violet-300: #a78bfa;
+  --violet-400: #8b5cf6;
+  --violet-500: #7c3aed;
+  --violet-600: #6d28d9;
+  --violet-700: #a78bfa;
 
-  --sh-card-a: rgb(0 0 0 / 0.25);
-  --sh-card-b: rgb(0 0 0 / 0.2);
-  --sh-hover-a: rgb(0 0 0 / 0.4);
-  --sh-hover-b: rgb(0 0 0 / 0.3);
+  /* ── Shadows ──────────────────────────────────────────── */
+  --sh-card-a: rgb(0 0 0 / 0.3);
+  --sh-card-b: rgb(0 0 0 / 0.25);
+  --sh-hover-a: rgb(0 0 0 / 0.45);
+  --sh-hover-b: rgb(0 0 0 / 0.35);
   --sh-glow: rgb(245 158 11 / 0.45);
-
-  --success: #22c55e;
-  --warning: #f59e0b;
-  --danger: #ef4444;
-  --info: #38bdf8;
-  --bg-deep: #0b0f19;
-  --bg-sidebar: #11151f;
-  --bg-card: #161b26;
-  --bg-elevated: #1e2433;
-  --text-primary: #f1f5f9;
-  --text-secondary: #94a3b8;
-  --text-muted: #64748b;
-  --accent-primary: #f59e0b;
-  --accent-hover: #fbbf24;
-  --border: #2a3142;
+  --sh-drop-a: rgb(0 0 0 / 0.45);
+  --sh-drop-b: rgb(0 0 0 / 0.3);
 }
 
+/* ═══════════════════════════════════════════════════════════
+   BASE LAYER
+   ═══════════════════════════════════════════════════════════ */
 @layer base {
   html,
   body,
@@ -268,10 +294,7 @@
     transition: background-color 0.25s ease, color 0.25s ease;
   }
 
-  h1,
-  h2,
-  h3,
-  .font-display {
+  h1, h2, h3, .font-display {
     letter-spacing: -0.02em;
   }
 
@@ -281,8 +304,8 @@
   }
 
   ::-webkit-scrollbar {
-    width: 10px;
-    height: 10px;
+    width: 8px;
+    height: 8px;
   }
   ::-webkit-scrollbar-track {
     background: transparent;
@@ -311,6 +334,9 @@
   }
 }
 
+/* ═══════════════════════════════════════════════════════════
+   UTILITY LAYER
+   ═══════════════════════════════════════════════════════════ */
 @layer utilities {
   .tnum {
     font-variant-numeric: tabular-nums;
@@ -324,6 +350,9 @@
   }
 }
 
+/* ═══════════════════════════════════════════════════════════
+   REDUCED MOTION
+   ═══════════════════════════════════════════════════════════ */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

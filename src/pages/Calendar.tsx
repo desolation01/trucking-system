@@ -11,14 +11,15 @@ import {
   addDays,
 } from "date-fns";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useStore } from "../lib/store";
-import { Button, Modal, Select, Badge, cx, statusTone } from "../components/ui";
+import { useStore, useStoreLoading } from "../lib/store";
+import { Button, Modal, Select, Badge, cx, statusTone, Skeleton } from "../components/ui";
 import { peso0, fmtTime } from "../lib/format";
 import { getVehicle, getDriver } from "../lib/analytics";
 import type { Trip } from "../lib/types";
 
 export function CalendarPage() {
   const data = useStore();
+  const loading = useStoreLoading();
   const [cursor, setCursor] = useState(new Date());
   const [view, setView] = useState<"month" | "week">("month");
   const [driverFilter, setDriverFilter] = useState("");
@@ -102,14 +103,14 @@ export function CalendarPage() {
             {format(d, "d")}
           </span>
           {trips.length > 0 && (
-            <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-panel px-1.5 text-[10px] font-semibold text-panel-ink-strong">
+            <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-panel px-1.5 text-[10px] font-semibold text-panel-ink-strong tnum">
               {trips.length}
             </span>
           )}
         </div>
         {trips.length > 0 && (
           <div className="mt-auto">
-            <p className={cx("text-[11px] font-semibold", profit >= 0 ? "text-emerald-300" : "text-red-300")}>
+            <p className={cx("tnum text-[11px] font-semibold", profit >= 0 ? "text-emerald-500 dark:text-emerald-400" : "text-red-500 dark:text-red-400")}>
               {peso0(profit)}
             </p>
           </div>
@@ -120,6 +121,8 @@ export function CalendarPage() {
   };
 
   const weekHeader = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+  if (loading) return <div className="space-y-4"><Skeleton className="h-10 w-80 rounded-lg" /><div className="grid grid-cols-7 gap-1">{Array.from({length:35}).map((_,i)=><Skeleton key={i} className="h-24 rounded-lg" />)}</div></div>;
 
   return (
     <div>
@@ -141,7 +144,7 @@ export function CalendarPage() {
                 key={v}
                 onClick={() => setView(v)}
                 className={cx(
-                  "px-3 py-1.5 text-xs font-medium capitalize",
+                  "px-3 py-1.5 text-xs font-medium capitalize transition-all duration-150",
                   view === v ? "bg-brand text-on-brand" : "bg-card text-ink-soft hover:bg-card-soft"
                 )}
               >
@@ -170,10 +173,10 @@ export function CalendarPage() {
         <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-muted" /> No trips</span>
       </div>
 
-      <div className="overflow-hidden rounded-2xl border border-edge bg-card shadow-card">
+      <div className="overflow-hidden rounded-xl border border-edge bg-card shadow-card">
         <div className="grid grid-cols-7 border-b border-edge bg-card-soft">
           {weekHeader.map((d) => (
-            <div key={d} className="px-2 py-2 text-center text-[11px] font-semibold uppercase tracking-wide text-muted">
+            <div key={d} className="px-2 py-2.5 text-center text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">
               {d}
             </div>
           ))}
@@ -201,7 +204,7 @@ export function CalendarPage() {
                 <div key={t.id} className="flex flex-wrap items-center gap-3 rounded-lg border border-edge/70 bg-card-soft px-3 py-2.5">
                   <div className="min-w-[90px]">
                     <p className="text-xs font-semibold text-ink">{fmtTime(t.date_time)}</p>
-                    <p className="text-[11px] font-medium text-brand">{t.transportify_id}</p>
+                    <p className="text-[11px] font-medium text-amber-500 dark:text-amber-400">{t.transportify_id}</p>
                   </div>
                   <div className="min-w-[110px]">
                     <p className="text-sm font-medium text-ink-soft">{driver?.name ?? "—"}</p>
@@ -215,12 +218,12 @@ export function CalendarPage() {
                   </div>
                   <div className="ml-auto flex items-center gap-3">
                     <div className="text-right">
-                      <p className="text-xs text-muted">Gross {peso0(t.gross)}</p>
-                      <p className={cx("text-xs font-semibold", profit >= 0 ? "text-emerald-400" : "text-red-400")}>
+                      <p className="tnum text-xs text-muted">Gross {peso0(t.gross)}</p>
+                      <p className={cx("tnum text-xs font-semibold", profit >= 0 ? "text-emerald-500 dark:text-emerald-400" : "text-red-500 dark:text-red-400")}>
                         Profit {peso0(profit)}
                       </p>
                     </div>
-                    <Badge tone={statusTone(t.status)}>{t.status}</Badge>
+                    <Badge tone={statusTone(t.status)} dot>{t.status}</Badge>
                   </div>
                 </div>
               );
@@ -230,7 +233,7 @@ export function CalendarPage() {
         {selectedDay && selectedTrips.length > 0 && (
           <p className="mt-3 text-right text-xs text-muted">
             Total profit for the day:{" "}
-            <strong className="text-ink-soft">
+            <strong className="tnum text-ink-soft">
               {peso0(selectedTrips.reduce((s, t) => s + (t.gross - t.total_expense), 0))}
             </strong>
           </p>

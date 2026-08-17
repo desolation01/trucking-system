@@ -3,6 +3,7 @@ import {
   CalendarDays,
   Car,
   Command,
+  Fuel,
   LayoutDashboard,
   LogOut,
   Menu,
@@ -28,6 +29,7 @@ export type PageKey =
   | "employees"
   | "vehicles"
   | "customers"
+  | "diesel"
   | "payroll"
   | "settings";
 
@@ -44,6 +46,7 @@ const navItems: Array<{
   { key: "employees", label: "Employees", icon: <Users className="h-4 w-4" />, roles: ["owner", "staff"], section: "ops" },
   { key: "vehicles", label: "Vehicles", icon: <Car className="h-4 w-4" />, roles: ["owner", "staff"], section: "ops" },
   { key: "customers", label: "Customers", icon: <Users2 className="h-4 w-4" />, roles: ["owner", "staff"], section: "ops" },
+  { key: "diesel", label: "Diesel Distribution", icon: <Fuel className="h-4 w-4" />, roles: ["owner", "staff", "accountant"], section: "ops" },
   { key: "payroll", label: "Payroll", icon: <Wallet className="h-4 w-4" />, roles: ["owner", "accountant"], section: "admin" },
   { key: "settings", label: "Settings", icon: <Settings className="h-4 w-4" />, roles: ["owner"], section: "admin" },
 ];
@@ -55,19 +58,20 @@ const titles: Record<PageKey, { title: string; subtitle: string }> = {
   employees: { title: "Employees", subtitle: "Drivers, helpers and office staff" },
   vehicles: { title: "Vehicles", subtitle: "Company fleet" },
   customers: { title: "Customers", subtitle: "Auto-tracked from trip phone numbers" },
+  diesel: { title: "Diesel Distribution", subtitle: "Distribute fuel costs across trips and deduct from commissions" },
   payroll: { title: "Payroll & Commissions", subtitle: "Driver and helper earnings by period" },
   settings: { title: "Settings", subtitle: "Company profile, vehicle types, commission rules" },
 };
 
 function Brand() {
   return (
-    <div className="flex items-center gap-3">
-      <div className="relative flex h-9 w-9 items-center justify-center rounded-md bg-brand text-on-brand shadow-glow">
+    <div className="flex items-center gap-3 px-1">
+      <div className="relative flex h-9 w-9 items-center justify-center rounded-lg bg-brand text-on-brand shadow-glow transition-all duration-200 hover:shadow-lg">
         <Truck className="h-5 w-5" />
       </div>
       <div className="leading-tight">
         <p className="font-display text-[15px] font-bold tracking-tight text-panel-ink-strong">FastHaul Ops</p>
-        <p className="text-[11px] font-medium uppercase tracking-widest text-panel-ink">Fleet · Dispatch · Payroll</p>
+        <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-panel-ink/70">Fleet · Dispatch · Payroll</p>
       </div>
     </div>
   );
@@ -157,10 +161,10 @@ function CommandSearch({
 
   const kindIcon: Record<SearchResult["kind"], string> = {
     page: "text-ink-soft",
-    trip: "text-amber-500",
+    trip: "text-amber-500 dark:text-amber-400",
     employee: "text-sky-500",
-    vehicle: "text-cyan-600",
-    customer: "text-emerald-400",
+    vehicle: "text-cyan-600 dark:text-cyan-400",
+    customer: "text-emerald-500 dark:text-emerald-400",
   };
 
   const go = (r: SearchResult) => {
@@ -174,7 +178,7 @@ function CommandSearch({
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center bg-slate-950/50 p-4 pt-[10vh] backdrop-blur-sm" onClick={onClose}>
       <div
-        className="w-full max-w-xl overflow-hidden rounded-lg border border-edge bg-card shadow-card-hover"
+        className="w-full max-w-xl overflow-hidden rounded-xl border border-edge bg-card shadow-dropdown"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center gap-2 border-b border-edge/70 px-4">
@@ -208,26 +212,26 @@ function CommandSearch({
               onClick={() => go(r)}
               onMouseEnter={() => setActive(i)}
               className={cx(
-                "flex w-full items-center gap-3 rounded-md px-3 py-2 text-left",
+                "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors",
                 i === active ? "bg-brand-soft/60" : ""
               )}
             >
-              <span className={cx("w-16 shrink-0 text-[10px] font-semibold uppercase tracking-wider", kindIcon[r.kind])}>
+              <span className={cx("w-16 shrink-0 text-[10px] font-semibold uppercase tracking-[0.08em]", kindIcon[r.kind])}>
                 {r.kind}
               </span>
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-sm font-medium text-ink">{r.title}</span>
                 <span className="block truncate text-[11px] text-muted">{r.sub}</span>
               </span>
-              <span className="text-[10px] font-medium uppercase tracking-wider text-muted">→ {r.page}</span>
+              <span className="text-[10px] font-medium uppercase tracking-[0.08em] text-muted">→ {r.page}</span>
             </button>
           ))}
         </div>
-        <div className="flex items-center gap-3 border-t border-edge/70 px-4 py-2 text-[10px] text-muted">
+        <div className="flex items-center gap-3 border-t border-edge/70 px-4 py-2.5 text-[10px] text-muted">
           <span><kbd className="rounded border border-edge bg-card-soft px-1 font-sans">↑↓</kbd> navigate</span>
           <span><kbd className="rounded border border-edge bg-card-soft px-1 font-sans">↵</kbd> open</span>
           <span><kbd className="rounded border border-edge bg-card-soft px-1 font-sans">esc</kbd> close</span>
-          <span className="ml-auto font-medium uppercase tracking-wider">⌘K search</span>
+          <span className="ml-auto font-medium uppercase tracking-[0.08em]">⌘K search</span>
         </div>
       </div>
     </div>
@@ -254,8 +258,8 @@ function OperationsStrip() {
 
   if (chips.length === 0) return null;
   return (
-    <div className="mb-4 flex flex-wrap items-center gap-2 rounded-md border border-edge/80 bg-card px-3 py-2">
-      <span className="mr-1 text-[10px] font-semibold uppercase tracking-wider text-muted">Today</span>
+    <div className="mb-4 flex flex-wrap items-center gap-2 rounded-lg border border-edge/80 bg-card px-3 py-2.5 shadow-sm">
+      <span className="mr-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted">Today</span>
       {chips.map((c) => (
         <span key={c.label} className="flex items-center gap-1.5 rounded-full bg-card-soft px-2.5 py-1 text-[11px] font-medium text-ink-soft">
           <span className={cx("h-1.5 w-1.5 rounded-full", c.tone)} />
@@ -297,8 +301,8 @@ export function Layout({
 
   const renderSection = (list: typeof opsItems, label: string) =>
     list.length > 0 && (
-      <div className="mt-1">
-        <p className="px-3 pb-1.5 pt-3 text-[10px] font-semibold uppercase tracking-widest text-panel-ink/60">{label}</p>
+      <div className="mt-0.5">
+        <p className="px-3 pb-1 pt-4 text-[10px] font-semibold uppercase tracking-[0.1em] text-panel-ink/50">{label}</p>
         {list.map((item) => {
           const active = page === item.key;
           return (
@@ -310,12 +314,20 @@ export function Layout({
               }}
               aria-current={active ? "page" : undefined}
               className={cx(
-                "group relative flex w-full items-center gap-3 rounded-md py-2 pl-3 pr-3 text-sm font-medium transition-colors",
-                active ? "text-amber-400" : "text-panel-ink hover:bg-panel-ink/5 hover:text-panel-ink-strong"
+                "group relative flex w-full items-center gap-3 rounded-lg py-2 pl-3 pr-3 text-sm font-medium transition-all duration-150",
+                active
+                  ? "text-amber-500 dark:text-amber-400"
+                  : "text-panel-ink hover:bg-panel-ink/5 hover:text-panel-ink-strong"
               )}
             >
-              <span className={cx("absolute left-0 top-1/2 h-4 w-0.5 -translate-y-1/2 rounded-full bg-amber-400 transition-opacity", active ? "opacity-100" : "opacity-0")} />
-              <span className={cx("shrink-0", active ? "text-amber-400" : "text-panel-ink/70 group-hover:text-panel-ink-strong")}>
+              <span className={cx(
+                "absolute left-0 top-1/2 h-4 w-0.5 -translate-y-1/2 rounded-full transition-all duration-150",
+                active ? "bg-amber-500 dark:bg-amber-400 opacity-100" : "opacity-0"
+              )} />
+              <span className={cx(
+                "shrink-0 transition-colors duration-150",
+                active ? "text-amber-500 dark:text-amber-400" : "text-panel-ink/60 group-hover:text-panel-ink-strong"
+              )}>
                 {item.icon}
               </span>
               {item.label}
@@ -327,22 +339,22 @@ export function Layout({
 
   const sidebar = (
     <div className="flex h-full flex-col bg-panel text-panel-ink">
-      <div className="flex items-center justify-between px-5 py-5">
+      <div className="flex items-center px-5 pt-5 pb-4">
         <Brand />
       </div>
-      <div className="hazard mx-5 h-[3px] rounded-full opacity-60" />
-      <nav className="flex-1 overflow-y-auto px-3 py-3">
+      <div className="mx-5 h-[2px] rounded-full bg-panel-edge" />
+      <nav className="flex-1 overflow-y-auto px-3 py-2">
         {renderSection(opsItems, "Operations")}
         {renderSection(adminItems, "Administration")}
       </nav>
       <div className="border-t border-panel-edge px-4 py-4">
-        <div className="flex items-center gap-3 rounded-md bg-panel-soft px-3 py-2.5">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-brand/20 font-display text-sm font-bold text-amber-400">
+        <div className="flex items-center gap-3 rounded-lg bg-panel-soft px-3 py-2.5 shadow-sm">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand/15 font-display text-sm font-bold text-amber-500 dark:text-amber-400">
             {user?.name?.slice(0, 1).toUpperCase()}
           </div>
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-medium text-panel-ink-strong">{user?.name}</p>
-            <p className="truncate text-[11px] text-panel-ink">
+            <p className="truncate text-[11px] text-panel-ink/70">
               {user?.role === "owner" ? "Owner / Admin" : user?.role === "staff" ? "Office Staff" : "Accountant"}
             </p>
           </div>
@@ -350,7 +362,7 @@ export function Layout({
             onClick={logout}
             title="Sign out"
             aria-label="Sign out"
-            className="rounded-md p-2 text-panel-ink transition-colors hover:bg-panel-ink/10 hover:text-panel-ink-strong"
+            className="rounded-lg p-2 text-panel-ink/60 transition-all duration-150 hover:bg-panel-ink/10 hover:text-panel-ink-strong active:scale-95"
           >
             <LogOut className="h-4 w-4" />
           </button>
@@ -369,11 +381,11 @@ export function Layout({
         </div>
       )}
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex items-center gap-3 border-b border-edge bg-card px-4 py-2.5 lg:px-6">
+        <header className="flex items-center gap-3 border-b border-edge bg-card/80 backdrop-blur-sm px-4 py-2.5 lg:px-6">
           <button
             onClick={() => setOpen(true)}
             aria-label="Open menu"
-            className="rounded-md p-1.5 text-ink-soft transition-colors hover:bg-ink/5 lg:hidden"
+            className="rounded-lg p-1.5 text-ink-soft transition-all duration-150 hover:bg-ink/5 active:scale-95 lg:hidden"
           >
             <Menu className="h-5 w-5" />
           </button>
@@ -381,10 +393,10 @@ export function Layout({
             <h1 className="font-display text-base font-bold tracking-tight text-ink">{titles[page].title}</h1>
             <p className="truncate text-[11px] text-muted">{titles[page].subtitle}</p>
           </div>
-          <div className="flex-1 lg:flex lg:justify-center">
+          <div className="hidden lg:flex lg:flex-1 lg:justify-center">
             <button
               onClick={() => setSearchOpen(true)}
-              className="flex w-full max-w-md items-center gap-2 rounded-md border border-edge bg-card-soft px-3 py-1.5 text-sm text-muted transition-colors hover:border-edge-strong hover:text-ink-soft"
+              className="flex w-full max-w-md items-center gap-2 rounded-lg border border-edge bg-card-soft px-3 py-1.5 text-sm text-muted transition-all duration-150 hover:border-edge-strong hover:text-ink-soft"
             >
               <Search className="h-3.5 w-3.5" />
               <span className="flex-1 text-left">Search trips, drivers, plates…</span>
@@ -393,26 +405,35 @@ export function Layout({
               </span>
             </button>
           </div>
+          <div className="flex-1 lg:hidden" />
           <button
             onClick={toggle}
             aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
             title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-            className="rounded-md p-1.5 text-ink-soft transition-colors hover:bg-ink/5 hover:text-ink"
+            className="rounded-lg p-1.5 text-ink-soft transition-all duration-150 hover:bg-ink/5 hover:text-ink active:scale-95"
           >
             {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </button>
           <div className="hidden items-center gap-3 sm:flex">
-            <span className="rounded-full border border-edge bg-card-soft px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-ink-soft">
+            <span className="rounded-full border border-edge bg-card-soft px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-ink-soft">
               {user?.role}
             </span>
             <button
               onClick={logout}
               aria-label="Sign out"
-              className="rounded-md p-1.5 text-muted transition-colors hover:bg-ink/5 hover:text-ink lg:hidden"
+              className="rounded-lg p-1.5 text-muted transition-all duration-150 hover:bg-ink/5 hover:text-ink active:scale-95 lg:hidden"
             >
               <LogOut className="h-4 w-4" />
             </button>
           </div>
+          {/* Mobile search trigger */}
+          <button
+            onClick={() => setSearchOpen(true)}
+            className="rounded-lg p-1.5 text-ink-soft transition-all duration-150 hover:bg-ink/5 active:scale-95 lg:hidden"
+            aria-label="Search"
+          >
+            <Search className="h-5 w-5" />
+          </button>
         </header>
         <main className="flex-1 overflow-y-auto">
           <div className="mx-auto max-w-7xl px-4 py-5 sm:px-6 lg:px-8">

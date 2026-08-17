@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { BarChart3, Truck, ShieldCheck, TrendingUp, Wallet } from "lucide-react";
+import { BarChart3, Truck, ShieldCheck, TrendingUp, Wallet, UserPlus, LogIn } from "lucide-react";
 import { useAuth } from "../lib/auth";
+import { supabase, isConfigured } from "../lib/supabase";
 import { Button, cx } from "../components/ui";
 
 const loginInputCls =
@@ -18,23 +19,66 @@ const perks = [
   { icon: <Wallet className="h-4 w-4" />, title: "Commission automation", text: "Driver and helper earnings computed from rules." },
 ];
 
+type Mode = "signin" | "register";
+
 export function Login() {
   const { login } = useAuth();
-  const [email, setEmail] = useState("owner@trucking.ph");
-  const [password, setPassword] = useState("admin123");
+  const [mode, setMode] = useState<Mode>("signin");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [name, setName] = useState("");
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setTimeout(() => {
-      const res = login(email, password);
-      if (!res.ok) {
-        setError(res.error ?? "Login failed");
-        setLoading(false);
+    setError("");
+    setSuccess("");
+
+    try {
+      if (mode === "register") {
+        if (!isConfigured) {
+          setError("Registration requires a Supabase backend.");
+          setLoading(false);
+          return;
+        }
+        const { data: authData, error: authError } = await supabase!.auth.signUp({
+          email,
+          password,
+          options: { data: { name, role: "owner" } },
+        });
+        if (authError) throw new Error(authError.message);
+        if (!authData.user) throw new Error("Registration failed.");
+
+        // Insert owner profile
+        await supabase!.from("profiles").insert({
+          id: authData.user.id,
+          name,
+          role: "owner",
+          status: "active",
+        });
+
+        setSuccess("Account created! You can now sign in.");
+        setMode("signin");
+        setName("");
+      } else {
+        const res = await login(email, password);
+        if (!res.ok) {
+          setError(res.error ?? "Login failed");
+        }
       }
-    }, 250);
+    } catch (err: any) {
+      setError(err?.message ?? "Something went wrong.");
+    }
+    setLoading(false);
+  };
+
+  const switchMode = () => {
+    setMode((m) => (m === "signin" ? "register" : "signin"));
+    setError("");
+    setSuccess("");
   };
 
   return (
@@ -62,7 +106,7 @@ export function Login() {
 
           <div>
             <h1 className="max-w-md font-display text-4xl font-bold leading-[1.1] tracking-tight text-panel-ink-strong">
-              Run the fleet with <span className="text-amber-400">clarity</span>.
+              Run the fleet with <span className="text-amber-500 dark:text-amber-400">clarity</span>.
             </h1>
             <p className="mt-4 max-w-md text-sm leading-relaxed text-panel-ink/80">
               Trips, vehicles, drivers, payroll and commissions in one calm, dispatch-grade workspace built for how trucking actually runs.
@@ -102,8 +146,24 @@ export function Login() {
           </div>
 
           <div className="rounded-lg border border-edge bg-card p-6 shadow-card sm:p-8">
-            <h2 className="font-display text-xl font-bold tracking-tight text-ink">Sign in</h2>
-            <p className="mt-1 text-sm text-muted">Owner & office staff access only.</p>
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="font-display text-xl font-bold tracking-tight text-ink">
+                  {mode === "signin" ? "Sign in" : "Create account"}
+                </h2>
+                <p className="mt-1 text-sm text-muted">
+                  {mode === "signin" ? "Owner & office staff access only." : "Register a new account."}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={switchMode}
+                className="flex items-center gap-1.5 rounded-md border border-edge px-2.5 py-1.5 text-xs font-medium text-ink-soft transition-colors hover:border-brand hover:text-brand"
+              >
+                {mode === "signin" ? <UserPlus className="h-3.5 w-3.5" /> : <LogIn className="h-3.5 w-3.5" />}
+                {mode === "signin" ? "Register" : "Sign in"}
+              </button>
+            </div>
 
             {error && (
               <div
@@ -114,7 +174,26 @@ export function Login() {
               </div>
             )}
 
+            {success && (
+              <div className="mt-4 rounded-md border border-emerald-500/20 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-300">
+                {success}
+              </div>
+            )}
+
             <form onSubmit={submit} className="mt-6 space-y-4">
+              {mode === "register" && (
+                <label className="block">
+                  <span className="mb-1.5 block text-xs font-medium text-ink-soft">Full Name</span>
+                  <input
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className={loginInputCls}
+                    required
+                    placeholder="Your name"
+                  />
+                </label>
+              )}
               <label className="block">
                 <span className="mb-1.5 block text-xs font-medium text-ink-soft">Email</span>
                 <input
@@ -134,40 +213,45 @@ export function Login() {
                   onChange={(e) => setPassword(e.target.value)}
                   className={loginInputCls}
                   required
-                  autoComplete="current-password"
+                  autoComplete={mode === "register" ? "new-password" : "current-password"}
+                  minLength={6}
                 />
               </label>
               <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? "Signing in…" : "Sign in"}
+                {loading
+                  ? mode === "signin" ? "Signing in…" : "Creating account…"
+                  : mode === "signin" ? "Sign in" : "Create account"}
               </Button>
             </form>
           </div>
 
-          <div className="mt-6 rounded-lg border border-edge bg-card/60 p-4">
-            <p className="mb-3 text-center text-[11px] font-semibold uppercase tracking-widest text-muted">
-              Demo accounts
-            </p>
-            <div className="grid gap-2">
-              {demos.map((d) => (
-                <button
-                  key={d.email}
-                  type="button"
-                  onClick={() => {
-                    setEmail(d.email);
-                    setPassword(d.password);
-                    setError("");
-                  }}
-                  className={cx(
-                    "flex items-center justify-between gap-2 rounded-md border border-edge px-3 py-2.5 text-left text-xs transition-all",
-                    "hover:border-brand hover:bg-brand-soft/50"
-                  )}
-                >
-                  <span className="font-medium text-ink">{d.label}</span>
-                  <span className="tnum text-muted">{d.email} / {d.password}</span>
-                </button>
-              ))}
+          {mode === "signin" && (
+            <div className="mt-6 rounded-lg border border-edge bg-card/60 p-4">
+              <p className="mb-3 text-center text-[11px] font-semibold uppercase tracking-widest text-muted">
+                Demo accounts
+              </p>
+              <div className="grid gap-2">
+                {demos.map((d) => (
+                  <button
+                    key={d.email}
+                    type="button"
+                    onClick={() => {
+                      setEmail(d.email);
+                      setPassword(d.password);
+                      setError("");
+                    }}
+                    className={cx(
+                      "flex items-center justify-between gap-2 rounded-md border border-edge px-3 py-2.5 text-left text-xs transition-all",
+                      "hover:border-brand hover:bg-brand-soft/50"
+                    )}
+                  >
+                    <span className="font-medium text-ink">{d.label}</span>
+                    <span className="tnum text-muted">{d.email} / {d.password}</span>
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </div>

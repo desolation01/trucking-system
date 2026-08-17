@@ -1,6 +1,50 @@
-node_modules
-dist
-dist-ssr
-*.local
+# ── Dependencies ──
+node_modules/
+
+# ── Build output ──
+dist/
+dist-ssr/
 *.tsbuildinfo
+
+# ── Environment & secrets (DO NOT COMMIT) ──
+.env
+.env.local
+.env.*
+!.env.example
+*.key
+*.pem
+*.crt
+credentials.json
+secrets.json
+
+# ── Development logs ──
+*.log
+dev.log
+
+# ── IDE / editor ──
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
 .DS_Store
+
+# ── OS files ──
+Thumbs.db
+Desktop.ini
+
+# ── AI / planning / agent files (not source code) ──
+*.plan.md
+implementation-plan.md
+PRD.md
+CLAUDE.md
+AGENTS.md
+AI_INSTRUCTIONS.md
+.cursorrules
+.windsurfrules
+plans/
+.ai/
+.hermes/
+
+# ── Misc local overrides ──
+*.local

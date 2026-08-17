@@ -58,8 +58,14 @@ export function computeCommission(
 
   const percentage = effectivePercentage(rule, input.vehicleType, input.employeeIds[0]);
 
+  // For helpers: use two_helper_percentage when 2+ helpers present
+    let adjustedPercentage = percentage;
+    if (input.role === "helper" && input.employeeIds.length >= 2 && rule?.two_helper_percentage != null) {
+      adjustedPercentage = rule.two_helper_percentage;
+    }
+
   const split = input.split ?? rule?.split_mode ?? "equal";
-  const rawTotal = (basisAmount * percentage) / 100;
+  const rawTotal = (basisAmount * adjustedPercentage) / 100;
 
   const capped =
     rule && rule.min_guaranteed_pay > 0 && rawTotal > 0
@@ -76,7 +82,7 @@ export function computeCommission(
 
   const total = Object.values(perEmployee).reduce((s, v) => s + v, 0);
 
-  return { perEmployee, total, basisAmount, basis, percentage };
+  return { perEmployee, total, basisAmount, basis, percentage: adjustedPercentage };
 }
 
 function effectivePercentage(

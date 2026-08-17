@@ -1,8 +1,10 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import { useStore, tripActions } from "../lib/store";
+import { useAuth } from "../lib/auth";
 import { computeCommission } from "../lib/commission";
 import { Button, Field, Input, Modal, Select, Textarea, cx } from "../components/ui";
+import { useToast } from "../lib/toast";
 import { peso } from "../lib/format";
 import type { ExpenseItem, Trip, TripStatus } from "../lib/types";
 
@@ -24,6 +26,8 @@ export function TripForm({
   initial?: Trip;
 }) {
   const data = useStore();
+  const { user } = useAuth();
+  const { toast } = useToast();
   const isEdit = Boolean(initial);
 
   const [driverId, setDriverId] = useState(initial?.driver_id ?? "");
@@ -32,9 +36,24 @@ export function TripForm({
     initial ? data.vehicles.find((v) => v.id === initial.vehicle_id)?.type ?? "" : ""
   );
   const [vehicleId, setVehicleId] = useState(initial?.vehicle_id ?? "");
+
+  // Auto-fill vehicle when driver is selected (new trips only)
+  const prevDriverRef = useRef(driverId);
+  useEffect(() => {
+    if (initial) return; // Don't auto-fill when editing
+    if (driverId && driverId !== prevDriverRef.current) {
+      const assigned = data.vehicles.find((v) => v.driver_id === driverId && v.status === "active");
+      if (assigned) {
+        setVehicleId(assigned.id);
+        setVehicleType(assigned.type);
+      }
+    }
+    prevDriverRef.current = driverId;
+  }, [driverId, initial, data.vehicles]);
   const [transportifyId, setTransportifyId] = useState(initial?.transportify_id ?? "");
   const [cargoWeight, setCargoWeight] = useState(initial?.cargo_weight?.toString() ?? "");
   const [cargoDimensions, setCargoDimensions] = useState(initial?.cargo_dimensions ?? "");
+  const [kmTraveled, setKmTraveled] = useState(initial?.km_traveled?.toString() ?? "");
   const [customerPhone, setCustomerPhone] = useState(initial?.customer_phone ?? "");
   const [customerName, setCustomerName] = useState(initial?.customer_name ?? "");
   const [pickup, setPickup] = useState(initial?.pickup_address ?? "");
@@ -69,7 +88,6 @@ export function TripForm({
 
   const grossNum = parseFloat(gross) || 0;
   const totalExpense = expenses.reduce((s, e) => s + (Number(e.amount) || 0), 0);
-  const profit = grossNum - totalExpense;
 
   const driverComm = useMemo(
     () =>
@@ -89,6 +107,11 @@ export function TripForm({
     [helperIds, vehicleType, grossNum, expenses, status, helperSplit, customSplit, data]
   );
 
+  const profit = useMemo(
+    () => grossNum - totalExpense - driverComm.total - helperComm.total,
+    [grossNum, totalExpense, driverComm, helperComm]
+  );
+
   const toggleHelper = (id: string) => {
     setHelperIds((prev) => (prev.includes(id) ? prev.filter((h) => h !== id) : [...prev, id]));
   };
@@ -98,8 +121,9 @@ export function TripForm({
     setCustomSplit((prev) => ({ ...prev, [id]: n }));
   };
 
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError("");
     if (!driverId) return setError("Select a driver.");
     if (!vehicleId) return setError("Select a vehicle.");
     if (!transportifyId.trim()) return setError("Transportify Booking ID is required.");
@@ -114,6 +138,7 @@ export function TripForm({
       transportify_id: transportifyId.trim(),
       cargo_weight: cargoWeight ? parseFloat(cargoWeight) : undefined,
       cargo_dimensions: cargoDimensions,
+      km_traveled: kmTraveled ? parseFloat(kmTraveled) : undefined,
       customer_phone: customerPhone.trim(),
       customer_name: customerName.trim() || undefined,
       pickup_address: pickup.trim(),
@@ -128,10 +153,24 @@ export function TripForm({
       status,
     };
 
-    const userId = "user-owner";
-    if (initial) tripActions.update(initial.id, input, userId);
-    else tripActions.add(input, userId);
-    onClose();
+    const userId = user?.id ?? "user-owner";
+    try {
+      if (initial) {
+        await tripActions.update(initial.id, input, userId);
+        toast("Trip updated", "success");
+      } else {
+        const { savedToCloud } = await tripActions.add(input, userId);
+        if (savedToCloud) {
+          toast("Trip saved to cloud", "success");
+        } else {
+          toast("Trip saved locally", "info");
+        }
+      }
+      onClose();
+    } catch (err) {
+      setError(String(err));
+      toast("Failed to save trip", "error");
+    }
   };
 
   const summaryRow = (label: string, value: string, cls?: string) => (
@@ -145,7 +184,6 @@ export function TripForm({
     <Modal
       open={open}
       onClose={onClose}
-      wide
       title={isEdit ? "Edit Trip" : "Add New Trip"}
       footer={
         <>
@@ -154,10 +192,10 @@ export function TripForm({
         </>
       }
     >
-      <form id="trip-form" onSubmit={submit}>
-        {error && <div className="mb-4 rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-400">{error}</div>}
+      <form id="trip-form" onSubmit={submit} className="space-y-4">
+        {error && <div className="rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-500 dark:text-red-500 dark:text-red-400">{error}</div>}
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <Field label="Driver" required>
             <Select value={driverId} onChange={(e) => setDriverId(e.target.value)}>
               <option value="">Select driver…</option>
@@ -223,6 +261,10 @@ export function TripForm({
             <Input value={cargoDimensions} onChange={(e) => setCargoDimensions(e.target.value)} placeholder="e.g. 2x1x1m" />
           </Field>
 
+          <Field label="KM Traveled" hint="Used for fair fuel cost distribution">
+            <Input type="number" min="0" value={kmTraveled} onChange={(e) => setKmTraveled(e.target.value)} placeholder="km" />
+          </Field>
+
           <Field label="Date & Time" required>
             <Input type="datetime-local" value={dateTime} onChange={(e) => setDateTime(e.target.value)} />
           </Field>
@@ -236,11 +278,11 @@ export function TripForm({
             </Select>
           </Field>
 
-          <Field label="Gross Amount (₱)" required className="sm:col-span-2 lg:col-span-3">
+          <Field label="Gross Amount (₱)" required className="sm:col-span-2">
             <Input type="number" min="0" step="0.01" value={gross} onChange={(e) => setGross(e.target.value)} placeholder="0.00" />
           </Field>
 
-          <Field label="Helpers" className="sm:col-span-2 lg:col-span-3">
+          <Field label="Helpers" className="sm:col-span-2">
             <div className="flex flex-wrap gap-2">
               {helpers.map((h) => (
                 <button
@@ -263,8 +305,8 @@ export function TripForm({
         </div>
 
         {helperIds.length > 1 && (
-          <div className="mt-4 rounded-lg border border-edge bg-card-soft p-3">
-            <p className="mb-2 text-xs font-medium text-ink-soft">Helper commission split</p>
+          <div className="rounded-lg border border-edge bg-card-soft p-2.5">
+            <p className="mb-1.5 text-[11px] font-medium text-ink-soft">Helper commission split</p>
             <div className="flex items-center gap-3">
               <label className="flex items-center gap-1.5 text-xs text-ink-soft">
                 <input type="radio" checked={helperSplit === "equal"} onChange={() => setHelperSplit("equal")} />
@@ -299,8 +341,8 @@ export function TripForm({
           </div>
         )}
 
-        <div className="mt-4">
-          <div className="mb-2 flex items-center justify-between">
+        <div>
+          <div className="mb-1.5 flex items-center justify-between">
             <p className="text-xs font-medium text-ink-soft">Itemized Expenses</p>
             <button
               type="button"
@@ -355,14 +397,14 @@ export function TripForm({
           <Textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Additional notes about this trip…" />
         </Field>
 
-        <div className="mt-5 rounded-2xl border border-edge bg-card-soft p-4">
-          <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted">Computed Summary</p>
+        <div className="rounded-xl border border-edge bg-card-soft p-3">
+          <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-muted">Computed Summary</p>
           {summaryRow("Gross", peso(grossNum))}
           {summaryRow("Total expense", `-${peso(totalExpense)}`, "text-red-400")}
           {summaryRow(
-            "Profit",
+            "Company Profit",
             peso(profit),
-            profit >= 0 ? "text-emerald-400" : "text-red-400"
+            profit >= 0 ? "text-emerald-500 dark:text-emerald-400" : "text-red-500 dark:text-red-400"
           )}
           {driverId && (
             <div className="mt-2 rounded-lg bg-card p-2">
@@ -378,7 +420,7 @@ export function TripForm({
               {summaryRow(
                 `Helper commission (${helperComm.percentage}% of ${helperComm.basis})`,
                 peso(helperComm.total),
-                "text-violet-400"
+                "text-violet-500 dark:text-violet-400"
               )}
               {Object.entries(helperComm.perEmployee).map(([id, amt]) => {
                 const name = data.employees.find((e) => e.id === id)?.name ?? id;

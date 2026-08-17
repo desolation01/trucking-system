@@ -67,7 +67,7 @@ export interface Kpis {
 export function computeKpis(trips: Trip[]): Kpis {
   const gross = trips.reduce((s, t) => s + t.gross, 0);
   const expense = trips.reduce((s, t) => s + t.total_expense, 0);
-  const profit = gross - expense;
+  const profit = gross - expense - trips.reduce((s, t) => s + t.driver_commission + t.helper_commission, 0);
   const completed = trips.filter((t) => t.status === "completed");
   return {
     gross,
@@ -123,7 +123,7 @@ export function buildSeries(trips: Trip[], range: Range, granularity: Granularit
     if (!pt) continue;
     pt.gross += t.gross;
     pt.expense += t.total_expense;
-    pt.profit += t.gross - t.total_expense;
+    pt.profit += t.gross - t.total_expense - t.driver_commission - t.helper_commission;
     pt.trips += 1;
     if (t.status === "completed") pt.tripsCompleted += 1;
   }
@@ -181,7 +181,7 @@ export function driverLeaders(trips: Trip[], data: AppData): DriverLeader[] {
     const cur = map.get(d.id) ?? { id: d.id, name: d.name, trips: 0, gross: 0, profit: 0, commission: 0 };
     cur.trips += 1;
     cur.gross += t.gross;
-    cur.profit += t.gross - t.total_expense;
+    cur.profit += t.gross - t.total_expense - t.driver_commission - t.helper_commission;
     cur.commission += t.driver_commission;
     map.set(d.id, cur);
   }
@@ -193,7 +193,7 @@ export function daySummaries(trips: Trip[]): Map<string, { profit: number; count
   for (const t of trips) {
     const key = format(new Date(t.date_time), "yyyy-MM-dd");
     const cur = map.get(key) ?? { profit: 0, count: 0 };
-    cur.profit += t.gross - t.total_expense;
+    cur.profit += t.gross - t.total_expense - t.driver_commission - t.helper_commission;
     cur.count += 1;
     map.set(key, cur);
   }

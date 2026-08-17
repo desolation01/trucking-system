@@ -1,13 +1,14 @@
 import { useMemo, useState } from "react";
 import Fuse from "fuse.js";
 import { Phone, Search } from "lucide-react";
-import { useStore } from "../lib/store";
-import { Badge, EmptyState, Modal, PageHeader, Td, Th, cx } from "../components/ui";
+import { useStore, useStoreLoading } from "../lib/store";
+import { Badge, EmptyState, Modal, PageHeader, Td, Th, cx, Skeleton, SkeletonTableRow } from "../components/ui";
 import { fmtDate, peso0 } from "../lib/format";
 import type { Customer, Trip } from "../lib/types";
 
 export function Customers() {
   const data = useStore();
+  const loading = useStoreLoading();
   const [query, setQuery] = useState("");
   const [viewing, setViewing] = useState<Customer | undefined>(undefined);
 
@@ -43,6 +44,8 @@ export function Customers() {
     return { count: trips.length, gross, last: trips[0]?.date_time };
   };
 
+  if (loading) return <div className="space-y-4"><Skeleton className="h-10 w-48 rounded-lg" /><Skeleton className="h-8 w-80 rounded-lg" /><div className="overflow-hidden rounded-xl border border-edge bg-card"><table className="w-full"><thead><tr>{Array.from({length:5}).map((_,i)=><th key={i} className="px-3 py-2.5"><Skeleton className="h-3 w-16" /></th>)}</tr></thead><tbody>{Array.from({length:5}).map((_,i)=><SkeletonTableRow key={i} cols={5} />)}</tbody></table></div></div>;
+
   return (
     <div>
       <PageHeader
@@ -56,11 +59,11 @@ export function Customers() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search by phone or name…"
-          className="w-full rounded-lg border border-edge bg-card py-2 pl-9 pr-3 text-sm shadow-card placeholder:text-muted focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand-ring"
+          className="w-full rounded-lg border border-edge bg-card py-2.5 pl-10 pr-3 text-sm shadow-card placeholder:text-muted/60 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand-ring transition-all duration-150"
         />
       </div>
 
-      <div className="overflow-hidden rounded-2xl border border-edge bg-card shadow-card">
+      <div className="overflow-hidden rounded-xl border border-edge bg-card shadow-card">
         <div className="overflow-x-auto">
           <table className="w-full border-collapse">
             <thead className="bg-card-soft">
@@ -76,15 +79,15 @@ export function Customers() {
               {customers.map((c) => {
                 const s = statsFor(c.phone_number);
                 return (
-                  <tr key={c.id} className="hover:bg-card-soft">
+                  <tr key={c.id} className="hover:bg-card-soft transition-colors duration-100">
                     <Td>
-                      <button onClick={() => setViewing(c)} className="font-medium text-brand hover:underline">
+                      <button onClick={() => setViewing(c)} className="font-medium text-amber-500 dark:text-amber-400 hover:underline">
                         {c.name ?? "Unnamed customer"}
                       </button>
                     </Td>
                     <Td className="text-muted">{c.phone_number}</Td>
-                    <Td><Badge tone="blue">{s.count} trips</Badge></Td>
-                    <Td className="font-medium">{peso0(s.gross)}</Td>
+                    <Td><Badge tone="blue" dot>{s.count} trips</Badge></Td>
+                    <Td className="tnum font-medium text-ink">{peso0(s.gross)}</Td>
                     <Td className="text-muted">{s.last ? fmtDate(s.last) : "—"}</Td>
                   </tr>
                 );
@@ -116,14 +119,14 @@ export function Customers() {
               <tbody className="divide-y divide-edge/70">
                 {tripsFor(viewing.phone_number).slice(0, 50).map((t) => (
                   <tr key={t.id}>
-                    <Td>{fmtDate(t.date_time)}</Td>
-                    <Td className="text-brand">{t.transportify_id}</Td>
+                    <Td className="text-ink-soft">{fmtDate(t.date_time)}</Td>
+                    <Td className="text-amber-500 dark:text-amber-400">{t.transportify_id}</Td>
                     <Td className="max-w-[260px]">
                       <p className="truncate text-ink-soft">{t.pickup_address}</p>
                       <p className="truncate text-[11px] text-muted">→ {t.dropoff_address}</p>
                     </Td>
-                    <Td>{peso0(t.gross)}</Td>
-                    <Td className={cx("font-medium", t.gross - t.total_expense >= 0 ? "text-emerald-400" : "text-red-400")}>
+                    <Td className="tnum text-ink-soft">{peso0(t.gross)}</Td>
+                    <Td className={cx("tnum font-medium", t.gross - t.total_expense >= 0 ? "text-emerald-500 dark:text-emerald-400" : "text-red-500 dark:text-red-400")}>
                       {peso0(t.gross - t.total_expense)}
                     </Td>
                     <Td>
