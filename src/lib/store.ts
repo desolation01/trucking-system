@@ -317,7 +317,7 @@ export interface TripInput {
 }
 
 export const tripActions = {
-  async add(input: TripInput, userId: string): Promise<Trip> {
+  async add(input: TripInput, userId: string): Promise<{ trip: Trip; savedToCloud: boolean }> {
     const vehicle = state.vehicles.find((v) => v.id === input.vehicle_id);
     const driver = state.employees.find((e) => e.id === input.driver_id);
     const nowIso = new Date().toISOString();

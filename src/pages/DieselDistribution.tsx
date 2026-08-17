@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Fuel, Search, Check, X, History, Clock } from "lucide-react";
+import { Fuel, Search, Check, X, History } from "lucide-react";
 import { useStore, tripActions, undoDieselDist, hasDieselDist, getDieselDistLogs, type DieselDistLog } from "../lib/store";
 import { Button, Card, Field, Input, PageHeader, cx, Badge, statusTone } from "../components/ui";
 import { peso0, fmtDateTime } from "../lib/format";
@@ -123,8 +123,6 @@ export function DieselDistribution() {
     if (totalKm <= 0) return null;
 
     let totalDriverShare = 0;
-    let totalHelperShare = 0;
-    let totalCompanyShare = 0;
 
     const tripShares = trips.map((t) => {
       const km = t.km_traveled ?? 0;
