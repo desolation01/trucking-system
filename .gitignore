@@ -47,4 +47,4 @@ plans/
 .hermes/
 
 # ── Misc local overrides ──
-*.local
+*.localsupabase/.temp/
