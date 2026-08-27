@@ -4,15 +4,17 @@ const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || supabaseUrl === "your_supabase_project_url_here") {
-  console.warn(
-    "[Supabase] VITE_SUPABASE_URL not configured. Calculator will use localStorage fallback."
-  );
+  if (import.meta.env.DEV)
+    console.warn(
+      "[Supabase] VITE_SUPABASE_URL not configured. Calculator will use localStorage fallback."
+    );
 }
 
 if (!supabaseAnonKey || supabaseAnonKey === "your_supabase_anon_key_here") {
-  console.warn(
-    "[Supabase] VITE_SUPABASE_ANON_KEY not configured. Calculator will use localStorage fallback."
-  );
+  if (import.meta.env.DEV)
+    console.warn(
+      "[Supabase] VITE_SUPABASE_ANON_KEY not configured. Calculator will use localStorage fallback."
+    );
 }
 
 const isConfigured =

@@ -8,9 +8,9 @@ const loginInputCls =
   "w-full rounded-md border border-edge bg-card px-3 py-2 text-sm text-ink placeholder:text-muted transition-colors focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand-ring";
 
 const demos = [
-  { label: "Owner", email: "owner@trucking.ph", password: "admin123" },
-  { label: "Office Staff", email: "grace@trucking.ph", password: "staff123" },
-  { label: "Accountant", email: "carlo@trucking.ph", password: "acct123" },
+  { label: "Owner", email: "owner@trucking.ph", password: "demo1234" },
+  { label: "Office Staff", email: "grace@trucking.ph", password: "demo1234" },
+  { label: "Accountant", email: "carlo@trucking.ph", password: "demo1234" },
 ];
 
 const perks = [

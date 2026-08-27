@@ -1,9 +1,9 @@
 import { useEffect, type ReactNode } from "react";
 import { X } from "lucide-react";
+import { cx } from "../lib/utils";
 
-export function cx(...parts: Array<string | false | null | undefined>) {
-  return parts.filter(Boolean).join(" ");
-}
+// Re-export cx for convenience — many pages import it from ui.tsx
+export { cx };
 
 /* ─────────────────────────────────────────────
    Button — responsive press feedback

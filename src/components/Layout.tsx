@@ -17,8 +17,9 @@ import {
   Users2,
 } from "lucide-react";
 import { useAuth } from "../lib/auth";
-import { useStore } from "../lib/store";
+import { useStore, registerCloudErrorHandler } from "../lib/store";
 import { useTheme } from "../lib/theme";
+import { useToast } from "../lib/toast";
 import { cx } from "./ui";
 import { isSameDay, startOfDay } from "date-fns";
 
@@ -281,8 +282,17 @@ export function Layout({
 }) {
   const { user, logout, can } = useAuth();
   const { theme, toggle } = useTheme();
+  const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+
+  // Register cloud error handler to surface Supabase failures as toasts
+  useEffect(() => {
+    registerCloudErrorHandler((message) => {
+      toast(`Cloud sync: ${message}`, "error");
+    });
+    return () => registerCloudErrorHandler(null);
+  }, [toast]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {

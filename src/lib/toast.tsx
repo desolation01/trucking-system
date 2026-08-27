@@ -1,6 +1,11 @@
 import { createContext, useContext, useState, useCallback, useEffect, useRef, type ReactNode } from "react";
 import { CheckCircle, XCircle, AlertCircle, X } from "lucide-react";
 
+// cx helper (shared from utils.ts — avoiding circular deps)
+import { cx } from "../lib/utils";
+
+// Remove the old local cx declaration — it's now imported from utils.ts
+
 export type ToastVariant = "success" | "error" | "info";
 
 export interface Toast {
@@ -170,9 +175,4 @@ function ToastItem({
       </button>
     </div>
   );
-}
-
-// cx helper (same as ui.tsx, duplicated to avoid circular deps)
-function cx(...parts: Array<string | false | null | undefined>) {
-  return parts.filter(Boolean).join(" ");
 }

@@ -63,6 +63,10 @@ export function Dashboard({ onNavigate }: { onNavigate: (p: PageKey) => void }) 
     if (loading) {
       const t = setTimeout(() => setForceShow(true), 2000);
       return () => clearTimeout(t);
+    } else {
+      // Reset forceShow when loading completes, so the skeleton
+      // shows on the next visit if data is still loading.
+      setForceShow(false);
     }
   }, [loading]);
 

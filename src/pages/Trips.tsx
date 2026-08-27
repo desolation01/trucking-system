@@ -311,9 +311,13 @@ export function Trips() {
               <Button
                 variant="danger"
                 onClick={() => {
-                  tripActions.remove(confirmDelete.id);
-                  toast(`Trip ${confirmDelete.transportify_id} deleted`, "success");
-                  setConfirmDelete(undefined);
+                  try {
+                    tripActions.remove(confirmDelete.id);
+                    toast(`Trip ${confirmDelete.transportify_id} deleted`, "success");
+                    setConfirmDelete(undefined);
+                  } catch (e: any) {
+                    toast(e?.message ?? "Failed to delete trip", "error");
+                  }
                 }}
               >
                 Delete

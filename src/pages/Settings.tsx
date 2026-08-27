@@ -125,7 +125,18 @@ export function Settings() {
             <p className="mt-1 text-sm leading-relaxed text-muted">This will permanently remove all trip records. Employees, vehicles, and settings will be kept.</p>
             <div className="mt-5 flex justify-end gap-2">
               <Button variant="secondary" onClick={() => setConfirmDeleteAll(false)}>Cancel</Button>
-              <Button variant="danger" onClick={async () => { await tripActions.deleteAll(); setConfirmDeleteAll(false); toast("All trips deleted", "success"); }}>Yes, delete all</Button>
+              <Button
+              variant="danger"
+              onClick={async () => {
+                try {
+                  await tripActions.deleteAll();
+                  setConfirmDeleteAll(false);
+                  toast("All trips deleted", "success");
+                } catch (e: any) {
+                  toast(e?.message ?? "Failed to delete trips", "error");
+                }
+              }}
+            >Yes, delete all</Button>
             </div>
           </div>
         </div>
@@ -137,7 +148,18 @@ export function Settings() {
             <p className="mt-1 text-sm leading-relaxed text-muted">This will erase all trips, employees, vehicles and settings you've added.</p>
             <div className="mt-5 flex justify-end gap-2">
               <Button variant="secondary" onClick={() => setConfirmReset(false)}>Cancel</Button>
-              <Button variant="danger" onClick={() => { resetData(); setConfirmReset(false); toast("Data reset to defaults", "info"); }}>Yes, reset</Button>
+              <Button
+              variant="danger"
+              onClick={() => {
+                try {
+                  resetData();
+                  setConfirmReset(false);
+                  toast("Data reset to defaults", "info");
+                } catch (e: any) {
+                  toast(e?.message ?? "Failed to reset data", "error");
+                }
+              }}
+            >Yes, reset</Button>
             </div>
           </div>
         </div>
@@ -307,8 +329,12 @@ function UserManagement() {
   const toggleUser = (u: User) => {
     if (u.role === "owner" && u.status === "active") return;
     const newStatus = u.status === "active" ? "inactive" : "active";
-    userActions.update(u.id, { status: newStatus });
-    toast(`User "${u.name}" ${newStatus === "active" ? "activated" : "deactivated"}`, "info");
+    try {
+      userActions.update(u.id, { status: newStatus });
+      toast(`User "${u.name}" ${newStatus === "active" ? "activated" : "deactivated"}`, "info");
+    } catch (e: any) {
+      toast(e?.message ?? "Failed to update user", "error");
+    }
   };
 
   return (

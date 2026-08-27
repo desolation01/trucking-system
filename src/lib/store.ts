@@ -26,6 +26,13 @@ function loadLocal(): AppData {
     if (raw) {
       const parsed = JSON.parse(raw) as AppData;
       if (parsed && Array.isArray(parsed.trips)) {
+        // Migration: strip any legacy plaintext passwords from saved users
+        if (Array.isArray(parsed.users)) {
+          parsed.users = parsed.users.map((u) => {
+            const { password: _legacy, ...rest } = u as User & { password?: string };
+            return rest;
+          });
+        }
         // Migration: update commission rules from "gross" to "profit" basis
         if (parsed.commissionRules) {
           parsed.commissionRules = parsed.commissionRules.map((r) => ({
@@ -36,10 +43,11 @@ function loadLocal(): AppData {
                     }));
         }
         // Recalculate all existing trips' commissions with the new rules
-                recalcTripCommissions(parsed);
-                // Save the migrated data back to localStorage
-                saveLocal(parsed);
-                return parsed;
+                        recalcTripCommissions(parsed);
+                        // Save the migrated data back to localStorage.
+                        // If this fails (quota), the recalc will run again on next load.
+                        try { saveLocal(parsed); } catch { /* non-critical */ }
+                        return parsed;
       }
     }
   } catch {
@@ -82,15 +90,81 @@ function saveLocal(state: AppData) {
 // ---------- State ----------
 
 let state: AppData = loadLocal();
+let currentUserRole: User["role"] | null = null;
 
 let initialized = false;
 const listeners = new Set<() => void>();
+
+// Cloud error handler — called when a Supabase operation fails.
+// The UI registers a handler via registerCloudErrorHandler (e.g., to show toasts).
+let cloudErrorHandler: ((message: string) => void) | null = null;
+
+/**
+ * Register a callback for cloud sync errors.
+ * The UI (Layout.tsx) calls this on mount to wire up toast notifications.
+ * Only one handler at a time; pass null to unregister.
+ */
+export function registerCloudErrorHandler(handler: ((message: string) => void) | null) {
+  cloudErrorHandler = handler;
+}
+
+/**
+ * Internal helper: fires the cloud error handler (if set) and console.warns.
+ * This is the single point where all Supabase errors surface.
+ */
+function reportCloudError(message: string, detail?: unknown) {
+  console.warn(`[Supabase] ${message}`, detail);
+  cloudErrorHandler?.(message);
+}
 
 function emit() {
   listeners.forEach((l) => l());
 }
 
+/**
+ * Set the current user's role for client-side authorization checks.
+ * Called by AuthProvider when the authenticated user changes.
+ * For local mode, the role is read from the local users record.
+ */
+export function setCurrentRole(role: User["role"] | null) {
+  currentUserRole = role;
+}
+
+function requireOwner(action: string): void {
+  if (currentUserRole && currentUserRole !== "owner") {
+    throw new Error(`Permission denied: only the owner can ${action}.`);
+  }
+}
+
+function requireOwnerOrStaff(action: string): void {
+  if (currentUserRole && currentUserRole === "accountant") {
+    throw new Error(`Permission denied: accountants have read-only access. Cannot ${action}.`);
+  }
+}
+
 // ---------- Supabase data loader ----------
+
+interface ProfileRow {
+  id: string;
+  name: string;
+  email?: string;
+  role: string;
+  status: string;
+  created_at: string;
+  owner_id?: string;
+}
+
+interface VehicleTypeRow {
+  name: string;
+}
+
+interface CompanyProfileRow {
+  id: string;
+  name: string;
+  address: string;
+  phone: string;
+  email: string;
+}
 
 let loadPromise: Promise<void> | null = null;
 
@@ -159,7 +233,7 @@ async function loadFromSupabase(): Promise<void> {
         recomputeLedger();
         persist();
   } catch (err) {
-    console.warn("[Supabase] Failed to load data, using localStorage fallback:", err);
+    reportCloudError("Failed to load data from Supabase, using localStorage fallback", err);
   }
 
   initialized = true;
@@ -177,7 +251,6 @@ async function fetchProfilesWithFallback(): Promise<User[]> {
           id: userData.user.id,
           name: meta?.name ?? "User",
           email: userData.user.email ?? "",
-          password: "",
           role: (meta?.role ?? "staff") as User["role"],
           status: "active",
           created_at: userData.user.created_at ?? new Date().toISOString(),
@@ -186,31 +259,30 @@ async function fetchProfilesWithFallback(): Promise<User[]> {
     }
     return [];
   }
-  return data.map((p: any) => ({
-    id: p.id,
-    name: p.name,
-    email: p.email ?? "",
-    password: "",
-    role: p.role as User["role"],
-    status: p.status as "active" | "inactive",
-    created_at: p.created_at,
-  }));
+  return data.map((p: ProfileRow) => ({
+      id: p.id,
+      name: p.name,
+      email: p.email ?? "",
+      role: p.role as User["role"],
+      status: p.status as "active" | "inactive",
+      created_at: p.created_at,
+    }));
 }
 
 async function fetchVehicleTypes(): Promise<string[]> {
   const { data } = await supabase!.from("vehicle_types").select("name");
-  return (data ?? []).map((r: any) => r.name);
+  return (data ?? []).map((r: VehicleTypeRow) => r.name);
 }
 
 async function fetchCompanyProfile(): Promise<AppData["company"]> {
   const { data } = await supabase!.from("company_profile").select("*").limit(1).single();
   if (!data) return seedData.company;
-  return {
-    name: (data as any).name,
-    address: (data as any).address,
-    phone: (data as any).phone,
-    email: (data as any).email,
-  };
+    return {
+      name: (data as CompanyProfileRow).name,
+      address: (data as CompanyProfileRow).address,
+      phone: (data as CompanyProfileRow).phone,
+      email: (data as CompanyProfileRow).email,
+    };
 }
 
 // ---------- Local helpers ----------
@@ -279,16 +351,33 @@ const uid = () =>
   `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 9)}`;
 
 // ---------- Auth ----------
+// Local mode uses a hardcoded mapping of demo emails to a single shared dev password.
+// Plaintext per-user passwords are no longer stored in the User type.
+// For real auth, configure Supabase and use the AuthProvider flow instead.
+const LOCAL_DEV_PASSWORD = "demo1234";
+const localDevAccounts: Record<string, User["role"]> = {
+  "owner@trucking.ph": "owner",
+  "grace@trucking.ph": "staff",
+  "carlo@trucking.ph": "accountant",
+};
 
 export const auth = {
+  /**
+   * Local-mode login for the demo / offline experience.
+   * Accepts any demo email + the shared dev password "demo1234".
+   * Returns the user record (without password) if credentials are valid.
+   * Real production auth goes through Supabase Auth in lib/auth.tsx.
+   */
   login(email: string, password: string): User | null {
-    const user = state.users.find(
-      (u) =>
-        u.email.toLowerCase() === email.toLowerCase() &&
-        u.password === password &&
-        u.status === "active"
+    const normalized = email.trim().toLowerCase();
+    if (password !== LOCAL_DEV_PASSWORD) return null;
+    const role = localDevAccounts[normalized];
+    if (!role) return null;
+    return (
+      state.users.find(
+        (u) => u.email.toLowerCase() === normalized && u.status === "active"
+      ) ?? null
     );
-    return user ?? null;
   },
 };
 
@@ -390,12 +479,12 @@ export const tripActions = {
                                           images: trip.images.length > 0 ? trip.images : [],
                 });
                 if (error) {
-                  console.warn("[Supabase] trip insert error, saving locally:", error);
-                } else {
-                  savedToCloud = true;
-                }
-              } catch (err) {
-                console.warn("[Supabase] trip insert exception, saving locally:", err);
+                                  reportCloudError(`Failed to insert trip ${trip.transportify_id}`, error);
+                                } else {
+                                  savedToCloud = true;
+                                }
+                              } catch (err) {
+                                reportCloudError(`Exception inserting trip ${trip.transportify_id}`, err);
               }
             }
 
@@ -470,9 +559,9 @@ export const tripActions = {
     if (isConfigured) {
           try {
             const { error } = await supabase!.from("trips").update(updates).eq("id", id);
-            if (error) console.warn("[Supabase] trip update error, saving locally:", error);
-          } catch (err) {
-            console.warn("[Supabase] trip update exception, saving locally:", err);
+            if (error) reportCloudError(`Failed to update trip ${id}`, error);
+                      } catch (err) {
+                        reportCloudError(`Exception updating trip ${id}`, err);
           }
         }
 
@@ -496,12 +585,13 @@ export const tripActions = {
       },
 
   async remove(id: string) {
+        try { requireOwner("delete trips"); } catch (e) { console.warn("[Auth]", e); throw e; }
         if (isConfigured) {
           try {
             const { error } = await supabase!.from("trips").delete().eq("id", id);
-            if (error) console.warn("[Supabase] trip delete error:", error);
-          } catch (err) {
-            console.warn("[Supabase] trip delete exception:", err);
+            if (error) reportCloudError(`Failed to delete trip ${id}`, error);
+                      } catch (err) {
+                        reportCloudError(`Exception deleting trip ${id}`, err);
           }
         }
         mutate((draft) => {
@@ -510,12 +600,13 @@ export const tripActions = {
               },
 
                 async deleteAll() {
+                  try { requireOwner("delete all trips"); } catch (e) { console.warn("[Auth]", e); throw e; }
                   if (isConfigured) {
                     try {
                       const { error } = await supabase!.from("trips").delete().neq("id", "");
-                      if (error) console.warn("[Supabase] delete all error:", error);
-                    } catch (err) {
-                      console.warn("[Supabase] delete all exception:", err);
+                      if (error) reportCloudError("Failed to delete all trips", error);
+                                          } catch (err) {
+                                            reportCloudError("Exception deleting all trips", err);
                     }
                   }
                   mutate((draft) => {
@@ -539,14 +630,18 @@ export const tripActions = {
             },
 
             /**
-             * Distribute a total diesel cost evenly across selected trips.
-             * Adds a Fuel expense to each trip and recalculates profit + commissions.
-             */
-            async distributeDiesel(
-                          tripIds: string[],
-                          totalFuelCost: number
-                        ) {
-                          if (tripIds.length === 0 || totalFuelCost <= 0) return;
+                         * Distribute a total diesel cost evenly across selected trips.
+                         * Adds a Fuel expense to each trip and recalculates profit + commissions.
+                         */
+                        async distributeDiesel(
+                                      tripIds: string[],
+                                      totalFuelCost: number
+                                    ) {
+                                      if (tripIds.length === 0 || totalFuelCost <= 0) return;
+                                      // Prevent concurrent calls from double-click races
+                                      if ((tripActions as any).__distributing) return;
+                                      (tripActions as any).__distributing = true;
+                                      try {
 
                           const now = new Date().toISOString();
                           const updatedTrips: Trip[] = [];
@@ -573,11 +668,15 @@ export const tripActions = {
                                                               note,
                                                             };
 
-                                                            // Remove existing fuel expenses and add the distributed one
-                                                            const newExpenses = [
-                                                              ...trip.expense_items.filter((e) => e.category !== "Fuel"),
-                                                              fuelExpense,
-                                                            ];
+                                                            // Remove existing fuel expenses AND any previously distributed
+                                                                                                                        // diesel-dist items, then add the new distributed one.
+                                                                                                                        // This prevents double-counting on re-distribution.
+                                                                                                                        const newExpenses = [
+                                                                                                                          ...trip.expense_items.filter(
+                                                                                                                            (e) => e.category !== "Fuel" && !e.id.startsWith("diesel-dist-")
+                                                                                                                          ),
+                                                                                                                          fuelExpense,
+                                                                                                                        ];
                                                             const totalExpense = newExpenses.reduce((s, e) => s + (Number(e.amount) || 0), 0);
 
                                                             const vehicle = draft.vehicles.find((v) => v.id === trip.vehicle_id);
@@ -644,16 +743,19 @@ export const tripActions = {
                                   helper_commission: t.helper_commission,
                                   updated_at: now,
                                 }).eq("id", t.id);
-                                if (error) console.warn("[Supabase] diesel dist update error:", error);
-                              } catch (err) {
-                                console.warn("[Supabase] diesel dist update exception:", err);
+                                if (error) reportCloudError(`Failed to sync diesel dist for trip ${t.id}`, error);
+                                                              } catch (err) {
+                                                                reportCloudError(`Exception syncing diesel dist for trip ${t.id}`, err);
                               }
                             }
                           }
-                        },
-                                          };
+                                                  } finally {
+                                                    (tripActions as any).__distributing = false;
+                                                  }
+                                                },
+                                                                                          };
 
-                        /** Remove diesel-dist expenses from a set of trips and recalculate commissions */
+                                                                        /** Remove diesel-dist expenses from a set of trips and recalculate commissions */
                         export function undoDieselDist(tripIds: string[]) {
                           mutate((draft) => {
                             for (const id of tripIds) {
@@ -726,6 +828,7 @@ export const employeeActions = {
     });
   },
   async update(id: string, emp: Partial<Employee>) {
+    try { requireOwnerOrStaff("update employees"); } catch (e) { console.warn("[Auth]", e); throw e; }
     if (isConfigured) {
       await supabase!.from("employees").update(emp).eq("id", id);
     }
@@ -734,6 +837,7 @@ export const employeeActions = {
     });
   },
   async remove(id: string) {
+    try { requireOwner("delete employees"); } catch (e) { console.warn("[Auth]", e); throw e; }
     if (isConfigured) {
       await supabase!.from("employees").delete().eq("id", id);
     }
@@ -756,6 +860,7 @@ export const vehicleActions = {
     });
   },
   async update(id: string, veh: Partial<Vehicle>) {
+    try { requireOwnerOrStaff("update vehicles"); } catch (e) { console.warn("[Auth]", e); throw e; }
     if (isConfigured) {
       await supabase!.from("vehicles").update(veh).eq("id", id);
     }
@@ -764,6 +869,7 @@ export const vehicleActions = {
     });
   },
   async remove(id: string) {
+    try { requireOwner("delete vehicles"); } catch (e) { console.warn("[Auth]", e); throw e; }
     if (isConfigured) {
       await supabase!.from("vehicles").delete().eq("id", id);
     }
@@ -776,7 +882,13 @@ export const vehicleActions = {
 // ---------- Users ----------
 
 export const userActions = {
-  async add(user: Omit<User, "id" | "created_at">, ownerId?: string) {
+  /**
+   * Add a new user. The password is sent to Supabase Auth (signUp) for real
+   * authentication — it is NEVER stored on the User record or in any
+   * client-side state. The User type no longer carries a password field.
+   */
+  async add(user: Omit<User, "id" | "created_at"> & { password: string }, ownerId?: string) {
+    try { requireOwner("add users"); } catch (e) { console.warn("[Auth]", e); throw e; }
     if (isConfigured) {
       // Create the auth user first via Supabase Auth
       const { data: authData, error: authError } = await supabase!.auth.signUp({
@@ -790,8 +902,9 @@ export const userActions = {
       const authUserId = authData.user?.id;
       if (!authUserId) throw new Error("Failed to create auth user");
 
-      // Insert the profile — owner_id links staff/accountant to the owner who created them
-      const profile: any = {
+      // Insert the profile — owner_id links staff/accountant to the owner who created them.
+      // Never persist the password to the profiles table.
+      const profile: Partial<ProfileRow> = {
         id: authUserId,
         name: user.name,
         role: user.role,
@@ -800,19 +913,34 @@ export const userActions = {
       if (ownerId) profile.owner_id = ownerId;
       await supabase!.from("profiles").insert(profile);
 
-      const record = { ...user, id: authUserId, created_at: new Date().toISOString() };
+      const record: User = {
+        id: authUserId,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        status: user.status,
+        created_at: new Date().toISOString(),
+      };
       mutate((draft) => {
         draft.users.push(record);
       });
       return;
     }
-    // Local mode
-    const record = { ...user, id: uid(), created_at: new Date().toISOString() };
+    // Local mode: no password stored on user record
+    const record: User = {
+      id: uid(),
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      status: user.status,
+      created_at: new Date().toISOString(),
+    };
     mutate((draft) => {
       draft.users.push(record);
     });
   },
   async update(id: string, user: Partial<User>) {
+    try { requireOwner("update users"); } catch (e) { console.warn("[Auth]", e); throw e; }
     if (isConfigured) {
       await supabase!.from("profiles").update({
         name: user.name,
@@ -825,6 +953,7 @@ export const userActions = {
     });
   },
   async remove(id: string) {
+    try { requireOwner("delete users"); } catch (e) { console.warn("[Auth]", e); throw e; }
     if (isConfigured) {
       await supabase!.from("profiles").delete().eq("id", id);
     }
@@ -838,6 +967,7 @@ export const userActions = {
 
 export const ruleActions = {
   async update(id: string, rule: CommissionRule) {
+    try { requireOwner("update commission rules"); } catch (e) { console.warn("[Auth]", e); throw e; }
     if (isConfigured) {
       await supabase!.from("commission_rules").update({
               basis: rule.basis,
@@ -862,6 +992,7 @@ export const ruleActions = {
 
 export const settingsActions = {
   async setCompany(company: AppData["company"]) {
+    try { requireOwner("edit company profile"); } catch (e) { console.warn("[Auth]", e); throw e; }
     if (isConfigured) {
       const { data: existing } = await supabase!.from("company_profile").select("id").limit(1);
       if (existing && existing.length > 0) {
@@ -875,6 +1006,7 @@ export const settingsActions = {
     });
   },
   async addVehicleType(type: string) {
+    try { requireOwnerOrStaff("add vehicle types"); } catch (e) { console.warn("[Auth]", e); throw e; }
     if (isConfigured) {
       await supabase!.from("vehicle_types").insert({ name: type });
     }
@@ -883,6 +1015,7 @@ export const settingsActions = {
     });
   },
   async removeVehicleType(type: string) {
+    try { requireOwner("remove vehicle types"); } catch (e) { console.warn("[Auth]", e); throw e; }
     if (isConfigured) {
       await supabase!.from("vehicle_types").delete().eq("name", type);
     }
@@ -895,6 +1028,7 @@ export const settingsActions = {
 // ---------- Reset ----------
 
 export const resetData = () => {
+  try { requireOwner("reset all data"); } catch (e) { console.warn("[Auth]", e); throw e; }
   localStorage.removeItem(STORAGE_KEY);
   state = seedData;
   emit();
@@ -908,13 +1042,6 @@ function subscribe(cb: () => void) {
 }
 
 export function useStore(): AppData {
-  // Trigger initial load from Supabase once
-  if (isConfigured && !initialized && !loadPromise) {
-    loadPromise = loadFromSupabase().then(() => {
-      initialized = true;
-      emit();
-    });
-  }
   return useSyncExternalStore(subscribe, () => state);
 }
 
@@ -924,6 +1051,16 @@ export function useStoreLoading(): boolean {
 }
 
 export { state as storeData };
+
+// Auto-initialize Supabase load once, on module import.
+// The `initialized` flag is set synchronously BEFORE the async load starts,
+// so concurrent calls to useStore() from multiple components never race.
+if (isConfigured && !initialized) {
+  initialized = true;
+  loadPromise = loadFromSupabase().then(() => {
+    emit();
+  });
+}
 
 // ── Diesel distribution helpers ──────────────────────────────────────────
 

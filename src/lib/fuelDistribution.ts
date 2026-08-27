@@ -67,7 +67,9 @@ export function distributeFuel(
       // Remove the original fuel item from source
       newExpenses = trip.expense_items.filter((e) => e.id !== fuelExpenseId);
     } else {
-      newExpenses = [...trip.expense_items];
+      // Remove any previously distributed fuel from candidate trips
+      // to prevent double-counting on re-distribution.
+      newExpenses = trip.expense_items.filter((e) => !e.id.startsWith("dist-fuel-"));
     }
 
     // Add the distributed fuel expense (only if share > 0)

@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import type { Role, User } from "../lib/types";
 import { supabase, isConfigured } from "../lib/supabase";
-import { auth as localAuth } from "../lib/store";
+import { auth as localAuth, setCurrentRole } from "../lib/store";
 
 const SESSION_KEY = "trucking-ops-session";
 
@@ -53,7 +53,6 @@ function mapProfileToUser(profile: {
     id: profile.id,
     name: profile.name,
     email: profile.email ?? "",
-    password: "",
     role: profile.role as Role,
     status: profile.status as "active" | "inactive",
     created_at: profile.created_at,
@@ -67,32 +66,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(isConfigured);
 
   useEffect(() => {
-    if (!isConfigured) return;
+      if (!isConfigured) return;
 
-    // Restore session
-    supabase!.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        fetchProfile(session.user.id);
-      } else {
-        setUser(null);
-        setLoading(false);
-      }
-    });
+      const abortController = new AbortController();
 
-    // Listen for auth changes
-    const {
-      data: { subscription },
-    } = supabase!.auth.onAuthStateChange((event, session) => {
-      if (event === "SIGNED_IN" && session?.user) {
-        fetchProfile(session.user.id);
-      } else if (event === "SIGNED_OUT") {
-        setUser(null);
-        setLoading(false);
-      }
-    });
+      // Restore session
+      supabase!.auth.getSession().then(({ data: { session } }) => {
+        if (abortController.signal.aborted) return;
+        if (session?.user) {
+          fetchProfile(session.user.id);
+        } else {
+          setUser(null);
+          setLoading(false);
+        }
+      });
 
-    return () => subscription.unsubscribe();
-  }, []);
+      // Listen for auth changes
+      const {
+        data: { subscription },
+      } = supabase!.auth.onAuthStateChange((event, session) => {
+        if (abortController.signal.aborted) return;
+        if (event === "SIGNED_IN" && session?.user) {
+          fetchProfile(session.user.id);
+        } else if (event === "SIGNED_OUT") {
+          setUser(null);
+          setLoading(false);
+        }
+      });
+
+      return () => {
+        abortController.abort();
+        subscription.unsubscribe();
+      };
+    }, []);
 
   async function fetchProfile(userId: string) {
       const { data, error } = await supabase!
@@ -105,21 +111,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const { data: userData } = await supabase!.auth.getUser();
       if (userData?.user?.user_metadata) {
         const meta = userData.user.user_metadata;
-        setUser(
-          mapProfileToUser({
-            id: userId,
-            name: meta.name ?? "User",
-            email: userData.user.email,
-            role: meta.role ?? "staff",
-            status: "active",
-            created_at: userData.user.created_at,
-          })
-        );
+        const u = mapProfileToUser({
+          id: userId,
+          name: meta.name ?? "User",
+          email: userData.user.email,
+          role: meta.role ?? "staff",
+          status: "active",
+          created_at: userData.user.created_at,
+        });
+        setUser(u);
+        setCurrentRole(u.role);
       } else {
         setUser(null);
+        setCurrentRole(null);
       }
     } else {
-          setUser(mapProfileToUser({ ...data[0], email: data[0].email ?? "" }));
+          const u = mapProfileToUser({ ...data[0], email: data[0].email ?? "" });
+          setUser(u);
+          setCurrentRole(u.role);
         }
     setLoading(false);
   }
@@ -128,7 +137,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!isConfigured) {
       const result = localLogin(email, password);
       const raw = localStorage.getItem(SESSION_KEY);
-      if (raw) setUser(JSON.parse(raw) as User);
+      if (raw) {
+        const u = JSON.parse(raw) as User;
+        setUser(u);
+        setCurrentRole(u.role);
+      }
       return result;
     }
 
@@ -146,13 +159,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!isConfigured) {
       localLogout();
       setUser(null);
+      setCurrentRole(null);
       return;
     }
     await supabase!.auth.signOut();
     setUser(null);
+    setCurrentRole(null);
   };
 
   const can = (...roles: Role[]) => (user ? roles.includes(user.role) : false);
+
+  // Sync the current role with the store so client-side authorization
+  // checks in tripActions/userActions/etc. can enforce role boundaries.
+  useEffect(() => {
+    setCurrentRole(user?.role ?? null);
+  }, [user]);
 
   return (
     <AuthContext.Provider value={{ user, loading, login, logout, can }}>
