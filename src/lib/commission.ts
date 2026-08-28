@@ -2,7 +2,6 @@ import type {
   AppData,
   CommissionBasis,
   CommissionRule,
-  Employee,
   ExpenseItem,
   SplitMode,
   Trip,
@@ -117,26 +116,4 @@ function distributeCustom(
   }
   const share = Math.round((total / employeeIds.length) * 100) / 100;
   return Object.fromEntries(employeeIds.map((id) => [id, share]));
-}
-
-export function helperSplitDisplay(
-  ids: string[],
-  split: SplitMode,
-  custom: Record<string, number>,
-  employees: Employee[]
-): string {
-  if (ids.length === 0) return "—";
-  if (split === "custom" && ids.every((id) => custom[id] != null)) {
-    const sum = ids.reduce((s, id) => s + (custom[id] || 0), 0);
-    return ids
-      .map((id) => {
-        const name = employees.find((e) => e.id === id)?.name ?? id;
-        const pct = sum > 0 ? Math.round(((custom[id] || 0) / sum) * 100) : 0;
-        return `${name} (${pct}%)`;
-      })
-      .join(", ");
-  }
-  return ids
-    .map((id) => employees.find((e) => e.id === id)?.name ?? id)
-    .join(", ");
 }

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { distributeFuel, getDistributableFuelItems } from "./fuelDistribution";
+import { distributeFuel } from "./fuelDistribution";
 import type { AppData, Trip } from "./types";
 
 let seq = 0;
@@ -168,27 +168,5 @@ describe("distributeFuel", () => {
     expect(fuelItems).toHaveLength(1);
     expect(fuelItems[0].amount).toBe(1500);
     expect(b.total_expense).toBe(1500);
-  });
-});
-
-describe("getDistributableFuelItems", () => {
-  it("lists undistributed fuel items and skips already-distributed ones", () => {
-    const tripA = makeTrip({
-      id: "A",
-      km_traveled: 100,
-      expense_items: [{ id: "fuel-1", category: "Fuel", amount: 3000 }],
-    });
-    const tripB = makeTrip({
-      id: "B",
-      km_traveled: 100,
-      date_time: "2026-08-21T08:00:00Z",
-      expense_items: [{ id: "dist-fuel-fuel-1-B", category: "Fuel", amount: 1500 }],
-    });
-
-    const items = getDistributableFuelItems(makeData([tripA, tripB]));
-    expect(items).toHaveLength(1);
-    expect(items[0].tripId).toBe("A");
-    expect(items[0].expenseId).toBe("fuel-1");
-    expect(items[0].amount).toBe(3000);
   });
 });

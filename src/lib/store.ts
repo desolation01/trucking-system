@@ -166,8 +166,6 @@ interface CompanyProfileRow {
   email: string;
 }
 
-let loadPromise: Promise<void> | null = null;
-
 async function loadFromSupabase(): Promise<void> {
   if (!isConfigured || initialized) return;
 
@@ -787,18 +785,22 @@ export const tripActions = {
                           });
                         }
 
-                                    function upsertCustomer(draft: AppData, input: TripInput) {
-          const existing = draft.customers.find(
-    (c) => c.phone_number === input.customer_phone
-  );
-  if (!existing && input.customer_phone) {
+                // Accepts PH mobile (09xxxxxxxxx), landline ((02) 8xxx-xxxx), or any
+// 7–15 digit string optionally containing spaces, dashes, parens, +.
+const PHONE_RE = /^[\d\s()+\-]{7,20}$/;
+
+function upsertCustomer(draft: AppData, input: TripInput) {
+  const phone = input.customer_phone?.trim();
+  if (!phone || !PHONE_RE.test(phone)) return;
+  const existing = draft.customers.find((c) => c.phone_number === phone);
+  if (!existing) {
     draft.customers.push({
       id: uid(),
-      phone_number: input.customer_phone,
+      phone_number: phone,
       name: input.customer_name || undefined,
       created_at: new Date().toISOString(),
     });
-  } else if (existing && input.customer_name && !existing.name) {
+  } else if (input.customer_name && !existing.name) {
     existing.name = input.customer_name;
   }
 }
@@ -809,7 +811,11 @@ export const employeeActions = {
   async add(emp: Omit<Employee, "id" | "created_at">) {
     const record = { ...emp, id: uid(), created_at: new Date().toISOString() };
     if (isConfigured) {
-      await supabase!.from("employees").insert(record);
+      const { error } = await supabase!.from("employees").insert(record);
+      if (error) {
+        reportCloudError(`Failed to add employee "${record.name}"`, error);
+        throw new Error(error.message);
+      }
     }
     mutate((draft) => {
       draft.employees.push(record);
@@ -818,7 +824,11 @@ export const employeeActions = {
   async update(id: string, emp: Partial<Employee>) {
     try { requireOwnerOrStaff("update employees"); } catch (e) { console.warn("[Auth]", e); throw e; }
     if (isConfigured) {
-      await supabase!.from("employees").update(emp).eq("id", id);
+      const { error } = await supabase!.from("employees").update(emp).eq("id", id);
+      if (error) {
+        reportCloudError(`Failed to update employee ${id}`, error);
+        throw new Error(error.message);
+      }
     }
     mutate((draft) => {
       draft.employees = draft.employees.map((e) => (e.id === id ? { ...e, ...emp } : e));
@@ -841,7 +851,11 @@ export const vehicleActions = {
   async add(veh: Omit<Vehicle, "id" | "created_at">) {
     const record = { ...veh, id: uid(), created_at: new Date().toISOString() };
     if (isConfigured) {
-      await supabase!.from("vehicles").insert(record);
+      const { error } = await supabase!.from("vehicles").insert(record);
+      if (error) {
+        reportCloudError(`Failed to add vehicle "${record.plate_number}"`, error);
+        throw new Error(error.message);
+      }
     }
     mutate((draft) => {
       draft.vehicles.push(record);
@@ -850,7 +864,11 @@ export const vehicleActions = {
   async update(id: string, veh: Partial<Vehicle>) {
     try { requireOwnerOrStaff("update vehicles"); } catch (e) { console.warn("[Auth]", e); throw e; }
     if (isConfigured) {
-      await supabase!.from("vehicles").update(veh).eq("id", id);
+      const { error } = await supabase!.from("vehicles").update(veh).eq("id", id);
+      if (error) {
+        reportCloudError(`Failed to update vehicle ${id}`, error);
+        throw new Error(error.message);
+      }
     }
     mutate((draft) => {
       draft.vehicles = draft.vehicles.map((v) => (v.id === id ? { ...v, ...veh } : v));
@@ -878,6 +896,13 @@ export const userActions = {
   async add(user: Omit<User, "id" | "created_at"> & { password: string }, ownerId?: string) {
     try { requireOwner("add users"); } catch (e) { console.warn("[Auth]", e); throw e; }
     if (isConfigured) {
+      // RLS v4 (008): tenant owners may only provision staff/accountant profiles.
+      // Additional owner accounts are created in the Supabase Dashboard instead.
+      if (user.role === "owner") {
+        throw new Error(
+          "Additional owner accounts must be created in the Supabase Dashboard (Authentication → Users). Staff and accountant accounts can be added here."
+        );
+      }
       // Create the auth user first via Supabase Auth
       const { data: authData, error: authError } = await supabase!.auth.signUp({
         email: user.email,
@@ -1038,14 +1063,12 @@ export function useStoreLoading(): boolean {
   return isConfigured && !initialized;
 }
 
-export { state as storeData };
-
 // Auto-initialize Supabase load once, on module import.
 // The `initialized` flag is set synchronously BEFORE the async load starts,
 // so concurrent calls to useStore() from multiple components never race.
 if (isConfigured && !initialized) {
   initialized = true;
-  loadPromise = loadFromSupabase().then(() => {
+  loadFromSupabase().then(() => {
     emit();
   });
 }
@@ -1074,11 +1097,3 @@ export function getDieselDistLogs(): DieselDistLog[] {
 export function hasDieselDist(trip: Trip): boolean {
   return trip.expense_items?.some((e) => e.id.startsWith("diesel-dist-")) ?? false;
 }
-
-// Expose init for login page to await
-export const ensureDataLoaded = async () => {
-  if (isConfigured && !initialized) {
-    if (!loadPromise) loadPromise = loadFromSupabase();
-    await loadPromise;
-  }
-};

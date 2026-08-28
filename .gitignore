@@ -6,6 +6,9 @@ dist/
 dist-ssr/
 *.tsbuildinfo
 
+# ── Vite cache ──
+.vite/
+
 # ── Environment & secrets (DO NOT COMMIT) ──
 .env
 .env.local
@@ -20,6 +23,14 @@ secrets.json
 # ── Development logs ──
 *.log
 dev.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ── Lock file (project uses npm; ignore pnpm/yarn alternates to avoid confusion) ──
+pnpm-lock.yaml
+yarn.lock
 
 # ── IDE / editor ──
 .vscode/
@@ -52,5 +63,7 @@ plans/
 # ── Supabase CLI local state (contains project ref / pooler URL) ──
 supabase/.temp/
 
-# ── Security audit report (documents live exploit paths — never publish) ──
+# ── Security audit reports (document live exploit paths — never publish) ──
 SECURITY-AUDIT.md
+*-audit.md
+*Audit.md

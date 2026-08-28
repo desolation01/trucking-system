@@ -15,7 +15,7 @@ const isoDate = (n: number): string => {
   return d.toISOString();
 };
 
-export const seedEmployees: Employee[] = [
+const seedEmployees: Employee[] = [
   {
     id: "emp-driver-1",
     user_id: null,

@@ -1,4 +1,4 @@
-import { startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfQuarter, endOfQuarter, startOfYear, endOfYear, addDays, subDays, differenceInCalendarDays, format, isWithinInterval } from "date-fns";
+import { startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfQuarter, endOfQuarter, startOfYear, endOfYear, addDays, differenceInCalendarDays, format, isWithinInterval } from "date-fns";
 import type { AppData, Trip } from "./types";
 
 export type QuickRange = "today" | "week" | "month" | "quarter" | "year";
@@ -25,22 +25,10 @@ export function rangeFor(quick: QuickRange): Range {
   }
 }
 
-export function customRange(daysBack: number, label: string): Range {
-  const end = endOfDay(new Date());
-  const start = startOfDay(subDays(new Date(), daysBack));
-  return { start, end, label };
-}
-
 export function tripsInRange(data: AppData, range: Range): Trip[] {
   return data.trips.filter((t) =>
     isWithinInterval(new Date(t.date_time), { start: range.start, end: range.end })
   );
-}
-
-export interface Filters {
-  vehicleType?: string;
-  driverId?: string;
-  status?: Trip["status"];
 }
 
 export function getVehicle(trip: Trip, data: AppData) {
@@ -49,10 +37,6 @@ export function getVehicle(trip: Trip, data: AppData) {
 
 export function getDriver(trip: Trip, data: AppData) {
   return data.employees.find((e) => e.id === trip.driver_id);
-}
-
-export function getEmployee(id: string, data: AppData) {
-  return data.employees.find((e) => e.id === id);
 }
 
 export interface Kpis {
@@ -186,16 +170,4 @@ export function driverLeaders(trips: Trip[], data: AppData): DriverLeader[] {
     map.set(d.id, cur);
   }
   return [...map.values()].sort((a, b) => b.profit - a.profit);
-}
-
-export function daySummaries(trips: Trip[]): Map<string, { profit: number; count: number }> {
-  const map = new Map<string, { profit: number; count: number }>();
-  for (const t of trips) {
-    const key = format(new Date(t.date_time), "yyyy-MM-dd");
-    const cur = map.get(key) ?? { profit: 0, count: 0 };
-    cur.profit += t.gross - t.total_expense - t.driver_commission - t.helper_commission;
-    cur.count += 1;
-    map.set(key, cur);
-  }
-  return map;
 }

@@ -340,7 +340,7 @@ function UserManagement() {
   return (
     <Card
       title="Login Accounts"
-      subtitle="Owner, office staff and accountant access only — drivers/helpers never log in"
+      subtitle="Staff and accountant accounts see only this company's data. Additional owner accounts are provisioned in the Supabase Dashboard."
       actions={
         <Button size="sm" onClick={() => setShowForm((v) => !v)}>
           <Plus className="h-4 w-4" /> Add user
@@ -360,10 +360,12 @@ function UserManagement() {
             <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
           </Field>
           <Field label="Role">
+            {/* RLS v4: owners can only provision staff/accountant. Additional
+                owners are created in the Supabase Dashboard (Authentication →
+                Users) — client-side owner creation is blocked by policy. */}
             <Select value={role} onChange={(e) => setRole(e.target.value as Role)}>
               <option value="staff">Office Staff</option>
               <option value="accountant">Accountant</option>
-              <option value="owner">Owner / Admin</option>
             </Select>
           </Field>
           <div className="flex items-end">
