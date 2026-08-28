@@ -242,21 +242,9 @@ async function loadFromSupabase(): Promise<void> {
 async function fetchProfilesWithFallback(): Promise<User[]> {
   const { data } = await supabase!.from("profiles").select("*");
   if (!data || data.length === 0) {
-    // Try to get user from auth
-    const { data: userData } = await supabase!.auth.getUser();
-    if (userData?.user) {
-      const meta = userData.user.user_metadata;
-      return [
-        {
-          id: userData.user.id,
-          name: meta?.name ?? "User",
-          email: userData.user.email ?? "",
-          role: (meta?.role ?? "staff") as User["role"],
-          status: "active",
-          created_at: userData.user.created_at ?? new Date().toISOString(),
-        },
-      ];
-    }
+    // No profile rows = unprovisioned. NEVER synthesize a user from
+    // user_metadata.role — it is client-supplied and would let anyone
+    // claim "owner" (C2 fix — SECURITY-AUDIT.md).
     return [];
   }
   return data.map((p: ProfileRow) => ({

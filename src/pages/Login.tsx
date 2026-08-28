@@ -52,13 +52,20 @@ export function Login() {
         if (authError) throw new Error(authError.message);
         if (!authData.user) throw new Error("Registration failed.");
 
-        // Insert owner profile
-        await supabase!.from("profiles").insert({
+        // Insert owner profile. Under RLS v3 (007) this is denied for
+        // self-service signups — surface the failure honestly instead of
+        // letting the account fall into the unprovisioned state silently.
+        const { error: profileError } = await supabase!.from("profiles").insert({
           id: authData.user.id,
           name,
           role: "owner",
           status: "active",
         });
+        if (profileError) {
+          throw new Error(
+            "Account created but setup incomplete. Ask the owner to provision your account from the Users page."
+          );
+        }
 
         setSuccess("Account created! You can now sign in.");
         setMode("signin");
@@ -225,7 +232,7 @@ export function Login() {
             </form>
           </div>
 
-          {mode === "signin" && (
+          {!isConfigured && mode === "signin" && (
             <div className="mt-6 rounded-lg border border-edge bg-card/60 p-4">
               <p className="mb-3 text-center text-[11px] font-semibold uppercase tracking-widest text-muted">
                 Demo accounts

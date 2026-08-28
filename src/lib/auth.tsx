@@ -107,25 +107,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .eq("id", userId);
 
       if (error || !data || data.length === 0) {
-      // Try to get user metadata as fallback
-      const { data: userData } = await supabase!.auth.getUser();
-      if (userData?.user?.user_metadata) {
-        const meta = userData.user.user_metadata;
-        const u = mapProfileToUser({
-          id: userId,
-          name: meta.name ?? "User",
-          email: userData.user.email,
-          role: meta.role ?? "staff",
-          status: "active",
-          created_at: userData.user.created_at,
-        });
-        setUser(u);
-        setCurrentRole(u.role);
-      } else {
+        // No profile row = unprovisioned account. NEVER trust user_metadata.role:
+        // it is client-supplied at signUp time and would let anyone claim "owner".
+        // (C2 fix — SECURITY-AUDIT.md)
         setUser(null);
         setCurrentRole(null);
-      }
-    } else {
+      } else {
           const u = mapProfileToUser({ ...data[0], email: data[0].email ?? "" });
           setUser(u);
           setCurrentRole(u.role);
