@@ -1116,54 +1116,87 @@ export const resetData = async () => {
 
     // ── 2. Re-insert seed data tagged with this owner's tenant ID ─────────────
     const tag = { owner_id: resolvedTenantId };
+    const suffix = resolvedTenantId.slice(0, 8);
     const now = new Date().toISOString();
 
     try {
       // Vehicle types
       await supabase!.from("vehicle_types").insert(
-        seedData.vehicleTypes.map((name) => ({ ...tag, name, id: `vt-${name.replace(/\s+/g, "-").toLowerCase()}-${resolvedTenantId.slice(0, 8)}` }))
+        seedData.vehicleTypes.map((name) => ({
+          ...tag,
+          name,
+          id: `vt-${name.replace(/\s+/g, "-").toLowerCase()}-${suffix}`,
+        }))
       );
+    } catch (err) { reportCloudError("Failed to seed vehicle_types", err); }
 
-      // Employees (exclude demo staff linked to local auth users)
-      const seedEmps = seedData.employees
-        .filter((e) => e.role === "driver" || e.role === "helper")
-        .map((e) => ({ ...e, ...tag, id: `${e.id}-${resolvedTenantId.slice(0, 8)}`, user_id: null, created_at: e.created_at ?? now }));
-      if (seedEmps.length > 0) await supabase!.from("employees").insert(seedEmps);
-
-      // Vehicles (update vehicle ids to match new employee ids)
-      const empIdMap: Record<string, string> = {};
-      seedData.employees.forEach((e) => {
-        empIdMap[e.id] = `${e.id}-${resolvedTenantId.slice(0, 8)}`;
-      });
-      const seedVehs = seedData.vehicles.map((v) => ({
-        ...v,
+    // Employees (drivers + helpers only — not demo staff tied to local auth)
+    const seedEmps = seedData.employees
+      .filter((e) => e.role === "driver" || e.role === "helper")
+      .map((e) => ({
+        id: `${e.id}-${suffix}`,
         ...tag,
-        id: `${v.id}-${resolvedTenantId.slice(0, 8)}`,
-        driver_id: v.driver_id ? (empIdMap[v.driver_id] ?? null) : null,
-        created_at: v.created_at ?? now,
+        user_id: null,
+        name: e.name,
+        role: e.role,
+        contact: e.contact,
+        license_no: e.license_no ?? null,
+        hire_date: e.hire_date,
+        status: e.status,
+        commission_override: e.commission_override ?? null,
+        base_salary: e.base_salary ?? 0,
+        created_at: e.created_at ?? now,
       }));
-      if (seedVehs.length > 0) await supabase!.from("vehicles").insert(seedVehs);
+    if (seedEmps.length > 0) {
+      try { await supabase!.from("employees").insert(seedEmps); }
+      catch (err) { reportCloudError("Failed to seed employees", err); }
+    }
 
-      // Commission rules
-      const seedRules = seedData.commissionRules.map((r) => ({
-        ...r,
-        ...tag,
-        id: `${r.id}-${resolvedTenantId.slice(0, 8)}`,
-        vehicle_type_overrides: r.vehicle_type_overrides,
-        employee_overrides: r.employee_overrides,
-        updated_at: now,
-      }));
-      if (seedRules.length > 0) await supabase!.from("commission_rules").insert(seedRules);
+    // Vehicles — suffix the plate number to avoid the global UNIQUE constraint
+    const empIdMap: Record<string, string> = {};
+    seedData.employees.forEach((e) => { empIdMap[e.id] = `${e.id}-${suffix}`; });
+    const seedVehs = seedData.vehicles.map((v) => ({
+      id: `${v.id}-${suffix}`,
+      ...tag,
+      plate_number: `${v.plate_number}-${suffix}`,   // avoid global UNIQUE conflict
+      type: v.type,
+      capacity_kg: v.capacity_kg,
+      status: v.status,
+      driver_id: v.driver_id ? (empIdMap[v.driver_id] ?? null) : null,
+      created_at: v.created_at ?? now,
+    }));
+    if (seedVehs.length > 0) {
+      try { await supabase!.from("vehicles").insert(seedVehs); }
+      catch (err) { reportCloudError("Failed to seed vehicles", err); }
+    }
 
-      // Company profile
+    // Commission rules — only send columns that exist in the table
+    const seedRules = seedData.commissionRules.map((r) => ({
+      id: `${r.id}-${suffix}`,
+      ...tag,
+      role: r.role,
+      basis: r.basis,
+      default_percentage: r.default_percentage,
+      two_helper_percentage: r.two_helper_percentage ?? null,
+      vehicle_type_overrides: r.vehicle_type_overrides,
+      employee_overrides: r.employee_overrides,
+      min_guaranteed_pay: r.min_guaranteed_pay ?? 0,
+      split_mode: r.split_mode ?? "equal",
+      updated_at: now,
+    }));
+    if (seedRules.length > 0) {
+      try { await supabase!.from("commission_rules").insert(seedRules); }
+      catch (err) { reportCloudError("Failed to seed commission_rules", err); }
+    }
+
+    // Company profile
+    try {
       await supabase!.from("company_profile").insert({
+        id: `company-${suffix}`,
         ...tag,
-        id: `company-${resolvedTenantId.slice(0, 8)}`,
         ...seedData.company,
       });
-    } catch (err) {
-      reportCloudError("Failed to re-seed data after reset", err);
-    }
+    } catch (err) { reportCloudError("Failed to seed company_profile", err); }
 
     // ── 3. Reload fresh state from Supabase ───────────────────────────────────
     initialized = false;
