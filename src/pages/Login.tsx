@@ -126,7 +126,7 @@ export function Login() {
   return (
     <main ref={rootRef} className="relative min-h-full w-full max-w-full overflow-x-hidden bg-[#0F1826] text-white">
       <img
-        src="https://images.unsplash.com/photo-1670509295484-df0c2512fec4?q=80&w=1600&auto=format&fit=crop"
+        src="/images/truck-bg.jpg"
         alt=""
         aria-hidden="true"
         className="login-hero-img absolute inset-0 h-full w-full object-cover opacity-35 mix-blend-screen"
