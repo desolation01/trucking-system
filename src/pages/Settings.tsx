@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { Plus, RotateCcw, Shield, Trash2 } from "lucide-react";
-import { useStore, settingsActions, ruleActions, userActions, tripActions, resetData } from "../lib/store";
+import { Plus, RotateCcw, Shield, Trash2, DatabaseZap } from "lucide-react";
+import { useStore, settingsActions, ruleActions, userActions, tripActions, resetData, loadDemoData } from "../lib/store";
 import { useAuth } from "../lib/auth";
 import { Badge, Button, Card, Field, Input, PageHeader, Select, cx } from "../components/ui";
 import { useToast } from "../lib/toast";
@@ -14,6 +14,9 @@ export function Settings() {
   const [newType, setNewType] = useState("");
   const [confirmReset, setConfirmReset] = useState(false);
   const [confirmDeleteAll, setConfirmDeleteAll] = useState(false);
+  const [confirmLoadDemo, setConfirmLoadDemo] = useState(false);
+  // Which destructive action is currently running — prevents spam clicks
+  const [loadingAction, setLoadingAction] = useState<"deleteAll" | "reset" | "loadDemo" | null>(null);
 
   const saveCompany = () => {
     settingsActions.setCompany(company);
@@ -108,76 +111,134 @@ export function Settings() {
 
       <div id="data-settings" className="scroll-mt-20">
       <Card title="Data Management" subtitle="Owner-only controls for company records">
-        <div className="mb-4 rounded-xl bg-red-50 px-4 py-3">
-          <p className="text-sm font-semibold text-red-700">These actions affect company records</p>
-          <p className="mt-1 text-xs leading-relaxed text-red-600">Review the consequences before continuing. Destructive changes cannot be undone.</p>
+        <div className="mb-4 rounded-xl bg-red-50 px-4 py-3 dark:bg-red-950/40">
+          <p className="text-sm font-semibold text-red-700 dark:text-red-400">These actions affect company records</p>
+          <p className="mt-1 text-xs leading-relaxed text-red-600 dark:text-red-500">Review the consequences before continuing. Destructive changes cannot be undone.</p>
         </div>
         <div className="space-y-4">
+          {/* Delete all trips */}
           <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-sm font-medium text-ink">Delete all trips</p>
               <p className="text-xs leading-relaxed text-muted">Remove all trip records. Employees, vehicles, and settings are preserved.</p>
             </div>
-            <Button variant="danger" onClick={() => setConfirmDeleteAll(true)}>
+            <Button variant="danger" disabled={loadingAction !== null} onClick={() => setConfirmDeleteAll(true)}>
               <Trash2 className="h-4 w-4" /> Delete all trips
             </Button>
           </div>
           <div className="border-t border-edge/60" />
+          {/* Reset — blank slate */}
           <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <p className="text-sm font-medium text-ink">Reset demo data</p>
-              <p className="text-xs leading-relaxed text-muted">Restore the seeded dataset and discard all changes.</p>
+              <p className="text-sm font-medium text-ink">Reset to blank</p>
+              <p className="text-xs leading-relaxed text-muted">Wipe all data and start from scratch — no employees, vehicles, or trips.</p>
             </div>
-            <Button variant="danger" onClick={() => setConfirmReset(true)}>
+            <Button variant="danger" disabled={loadingAction !== null} onClick={() => setConfirmReset(true)}>
               <RotateCcw className="h-4 w-4" /> Reset data
+            </Button>
+          </div>
+          <div className="border-t border-edge/60" />
+          {/* Load demo data */}
+          <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm font-medium text-ink">Load demo data</p>
+              <p className="text-xs leading-relaxed text-muted">Insert sample employees, vehicles, commission rules, and ~120 days of trips. Run Reset first to avoid duplicates.</p>
+            </div>
+            <Button variant="secondary" disabled={loadingAction !== null} onClick={() => setConfirmLoadDemo(true)}>
+              <DatabaseZap className="h-4 w-4" /> Load demo data
             </Button>
           </div>
         </div>
       </Card>
       </div>
 
+      {/* Delete all trips modal */}
       {confirmDeleteAll && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 backdrop-blur-sm p-4">
           <div role="dialog" aria-modal="true" aria-labelledby="settings-confirm-title" className="w-full max-w-sm rounded-xl bg-card p-5 shadow-dropdown">
             <h3 id="settings-confirm-title" className="text-base font-semibold text-ink">Delete all trips?</h3>
             <p className="mt-1 text-sm leading-relaxed text-muted">This will permanently remove all trip records. Employees, vehicles, and settings will be kept.</p>
             <div className="mt-5 flex justify-end gap-2">
-              <Button variant="secondary" onClick={() => setConfirmDeleteAll(false)}>Cancel</Button>
+              <Button variant="secondary" disabled={loadingAction === "deleteAll"} onClick={() => setConfirmDeleteAll(false)}>Cancel</Button>
               <Button
-              variant="danger"
-              onClick={async () => {
-                try {
-                  await tripActions.deleteAll();
-                  setConfirmDeleteAll(false);
-                  toast("All trips deleted", "success");
-                } catch (e: any) {
-                  toast(e?.message ?? "Failed to delete trips", "error");
-                }
-              }}
-            >Yes, delete all</Button>
+                variant="danger"
+                disabled={loadingAction === "deleteAll"}
+                onClick={async () => {
+                  setLoadingAction("deleteAll");
+                  try {
+                    await tripActions.deleteAll();
+                    setConfirmDeleteAll(false);
+                    toast("All trips deleted", "success");
+                  } catch (e: any) {
+                    toast(e?.message ?? "Failed to delete trips", "error");
+                  } finally {
+                    setLoadingAction(null);
+                  }
+                }}
+              >
+                {loadingAction === "deleteAll" ? "Deleting…" : "Yes, delete all"}
+              </Button>
             </div>
           </div>
         </div>
       )}
+
+      {/* Reset to blank modal */}
       {confirmReset && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 backdrop-blur-sm p-4">
           <div role="dialog" aria-modal="true" aria-labelledby="settings-reset-title" className="w-full max-w-sm rounded-xl bg-card p-5 shadow-dropdown">
-            <h3 id="settings-reset-title" className="text-base font-semibold text-ink">Reset all data?</h3>
-            <p className="mt-1 text-sm leading-relaxed text-muted">This will erase all trips, employees, vehicles and settings you've added.</p>
+            <h3 id="settings-reset-title" className="text-base font-semibold text-ink">Reset to blank slate?</h3>
+            <p className="mt-1 text-sm leading-relaxed text-muted">This will erase all trips, employees, vehicles, and settings. You will start from scratch.</p>
             <div className="mt-5 flex justify-end gap-2">
-              <Button variant="secondary" onClick={() => setConfirmReset(false)}>Cancel</Button>
+              <Button variant="secondary" disabled={loadingAction === "reset"} onClick={() => setConfirmReset(false)}>Cancel</Button>
               <Button
-              variant="danger"
-              onClick={async () => {
-                try {
-                  await resetData();
-                  setConfirmReset(false);
-                  toast("Data reset to defaults", "info");
-                } catch (e: any) {
-                  toast(e?.message ?? "Failed to reset data", "error");
-                }
-              }}
-            >Yes, reset</Button>
+                variant="danger"
+                disabled={loadingAction === "reset"}
+                onClick={async () => {
+                  setLoadingAction("reset");
+                  try {
+                    await resetData();
+                    setConfirmReset(false);
+                    toast("All data cleared", "info");
+                  } catch (e: any) {
+                    toast(e?.message ?? "Failed to reset data", "error");
+                  } finally {
+                    setLoadingAction(null);
+                  }
+                }}
+              >
+                {loadingAction === "reset" ? "Resetting…" : "Yes, reset"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Load demo data modal */}
+      {confirmLoadDemo && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 backdrop-blur-sm p-4">
+          <div role="dialog" aria-modal="true" aria-labelledby="settings-demo-title" className="w-full max-w-sm rounded-xl bg-card p-5 shadow-dropdown">
+            <h3 id="settings-demo-title" className="text-base font-semibold text-ink">Load demo data?</h3>
+            <p className="mt-1 text-sm leading-relaxed text-muted">This will insert sample employees, vehicles, commission rules, and ~120 days of trip history. Run <strong>Reset</strong> first if you want a clean slate.</p>
+            <div className="mt-5 flex justify-end gap-2">
+              <Button variant="secondary" disabled={loadingAction === "loadDemo"} onClick={() => setConfirmLoadDemo(false)}>Cancel</Button>
+              <Button
+                disabled={loadingAction === "loadDemo"}
+                onClick={async () => {
+                  setLoadingAction("loadDemo");
+                  try {
+                    await loadDemoData();
+                    setConfirmLoadDemo(false);
+                    toast("Demo data loaded", "success");
+                  } catch (e: any) {
+                    toast(e?.message ?? "Failed to load demo data", "error");
+                  } finally {
+                    setLoadingAction(null);
+                  }
+                }}
+              >
+                {loadingAction === "loadDemo" ? "Loading…" : "Yes, load demo"}
+              </Button>
             </div>
           </div>
         </div>

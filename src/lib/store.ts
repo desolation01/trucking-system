@@ -1078,183 +1078,203 @@ export const settingsActions = {
 
 // ---------- Reset ----------
 
+// ---------- Reset & Demo Data ----------
+
 export const resetData = async () => {
   try { requireOwner("reset all data"); } catch (e) { console.warn("[Auth]", e); throw e; }
 
   if (isConfigured) {
-    // Get the authoritative tenant ID directly from the live Supabase session.
     const { data: { session } } = await supabase!.auth.getSession();
     const userId = session?.user?.id ?? currentUserId;
-    console.log("[resetData] userId:", userId, "currentUserId:", currentUserId);
     if (!userId) throw new Error("Cannot reset: no authenticated user found.");
 
-    // Resolve owner_id: owner rows have owner_id=NULL so tenant = their own id.
-    const { data: profileRow, error: profileErr } = await supabase!
-      .from("profiles")
-      .select("id, owner_id, role")
-      .eq("id", userId)
-      .single();
-    console.log("[resetData] profileRow:", profileRow, "profileErr:", profileErr);
+    const { data: profileRow } = await supabase!
+      .from("profiles").select("id, owner_id, role").eq("id", userId).single();
     const resolvedTenantId =
       profileRow?.role === "owner" ? userId : (profileRow?.owner_id ?? userId);
-    console.log("[resetData] resolvedTenantId:", resolvedTenantId);
 
-    // ── 1. Delete all tenant-scoped rows ─────────────────────────────────────
+    // Delete all tenant-scoped rows — blank slate, no re-seed
     const tables = [
-      "calc_logs",
-      "payroll_ledger",
-      "trips",
-      "customers",
-      "employees",
-      "vehicles",
-      "vehicle_types",
-      "commission_rules",
-      "company_profile",
+      "calc_logs", "payroll_ledger", "trips", "customers",
+      "employees", "vehicles", "vehicle_types", "commission_rules", "company_profile",
     ] as const;
-
     for (const table of tables) {
       try {
         const { error } = await supabase!.from(table).delete().eq("owner_id", resolvedTenantId);
         if (error) reportCloudError(`Failed to reset table "${table}"`, error);
-      } catch (err) {
-        reportCloudError(`Exception resetting table "${table}"`, err);
-      }
+      } catch (err) { reportCloudError(`Exception resetting table "${table}"`, err); }
     }
+  }
 
-    // ── 2. Re-insert seed data tagged with this owner's tenant ID ─────────────
+  // Apply empty state locally
+  localStorage.removeItem(STORAGE_KEY);
+  const blank: AppData = {
+    users: state.users,
+    employees: [],
+    vehicles: [],
+    trips: [],
+    commissionRules: [],
+    payrollLedger: [],
+    customers: [],
+    vehicleTypes: [],
+    company: { ...seedData.company },
+  };
+  initialized = true;
+  apply(blank);
+};
+
+export const loadDemoData = async () => {
+  try { requireOwner("load demo data"); } catch (e) { console.warn("[Auth]", e); throw e; }
+
+  if (isConfigured) {
+    const { data: { session } } = await supabase!.auth.getSession();
+    const userId = session?.user?.id ?? currentUserId;
+    if (!userId) throw new Error("Cannot load demo data: no authenticated user found.");
+
+    const { data: profileRow } = await supabase!
+      .from("profiles").select("id, owner_id, role").eq("id", userId).single();
+    const resolvedTenantId =
+      profileRow?.role === "owner" ? userId : (profileRow?.owner_id ?? userId);
+
     const tag = { owner_id: resolvedTenantId };
     const suffix = resolvedTenantId.slice(0, 8);
     const now = new Date().toISOString();
 
+    // Build id maps so trips can reference the right employee/vehicle ids
+    const empIdMap: Record<string, string> = {};
+    seedData.employees.forEach((e) => { empIdMap[e.id] = `${e.id}-${suffix}`; });
+    const vehIdMap: Record<string, string> = {};
+    seedData.vehicles.forEach((v) => { vehIdMap[v.id] = `${v.id}-${suffix}`; });
+
+    // Vehicle types
     try {
-      // Vehicle types
-      const vtResult = await supabase!.from("vehicle_types").insert(
+      await supabase!.from("vehicle_types").insert(
         seedData.vehicleTypes.map((name) => ({
-          ...tag,
-          name,
+          ...tag, name,
           id: `vt-${name.replace(/\s+/g, "-").toLowerCase()}-${suffix}`,
         }))
       );
-      console.log("[resetData] vehicle_types insert:", vtResult.error ?? "OK");
     } catch (err) { reportCloudError("Failed to seed vehicle_types", err); }
 
-    // Employees (drivers + helpers only — not demo staff tied to local auth)
+    // Employees
     const seedEmps = seedData.employees
       .filter((e) => e.role === "driver" || e.role === "helper")
       .map((e) => ({
-        id: `${e.id}-${suffix}`,
-        ...tag,
-        user_id: null,
-        name: e.name,
-        role: e.role,
-        contact: e.contact,
-        license_no: e.license_no ?? null,
-        hire_date: e.hire_date,
-        status: e.status,
-        commission_override: e.commission_override ?? null,
-        base_salary: e.base_salary ?? 0,
-        created_at: e.created_at ?? now,
+        id: empIdMap[e.id], ...tag, user_id: null,
+        name: e.name, role: e.role, contact: e.contact,
+        license_no: e.license_no ?? null, hire_date: e.hire_date,
+        status: e.status, commission_override: e.commission_override ?? null,
+        base_salary: e.base_salary ?? 0, created_at: e.created_at ?? now,
       }));
     if (seedEmps.length > 0) {
-      try {
-        const empResult = await supabase!.from("employees").insert(seedEmps);
-        console.log("[resetData] employees insert:", empResult.error ?? "OK");
-      }
+      try { await supabase!.from("employees").insert(seedEmps); }
       catch (err) { reportCloudError("Failed to seed employees", err); }
     }
 
-    // Vehicles — suffix the plate number to avoid the global UNIQUE constraint
-    const empIdMap: Record<string, string> = {};
-    seedData.employees.forEach((e) => { empIdMap[e.id] = `${e.id}-${suffix}`; });
+    // Vehicles
     const seedVehs = seedData.vehicles.map((v) => ({
-      id: `${v.id}-${suffix}`,
-      ...tag,
+      id: vehIdMap[v.id], ...tag,
       plate_number: `${v.plate_number}-${suffix}`,
-      type: v.type,
-      capacity_kg: v.capacity_kg,
-      status: v.status,
+      type: v.type, capacity_kg: v.capacity_kg, status: v.status,
       driver_id: v.driver_id ? (empIdMap[v.driver_id] ?? null) : null,
       created_at: v.created_at ?? now,
     }));
     if (seedVehs.length > 0) {
-      try {
-        const vehResult = await supabase!.from("vehicles").insert(seedVehs);
-        console.log("[resetData] vehicles insert:", vehResult.error ?? "OK");
-      }
+      try { await supabase!.from("vehicles").insert(seedVehs); }
       catch (err) { reportCloudError("Failed to seed vehicles", err); }
     }
 
     // Commission rules
     const seedRules = seedData.commissionRules.map((r) => ({
-      id: `${r.id}-${suffix}`,
-      ...tag,
-      role: r.role,
-      basis: r.basis,
+      id: `${r.id}-${suffix}`, ...tag,
+      role: r.role, basis: r.basis,
       default_percentage: r.default_percentage,
       two_helper_percentage: r.two_helper_percentage ?? null,
       vehicle_type_overrides: r.vehicle_type_overrides,
       employee_overrides: r.employee_overrides,
       min_guaranteed_pay: r.min_guaranteed_pay ?? 0,
-      split_mode: r.split_mode ?? "equal",
-      updated_at: now,
+      split_mode: r.split_mode ?? "equal", updated_at: now,
     }));
     if (seedRules.length > 0) {
-      try {
-        const ruleResult = await supabase!.from("commission_rules").insert(seedRules);
-        console.log("[resetData] commission_rules insert:", ruleResult.error ?? "OK");
-      }
+      try { await supabase!.from("commission_rules").insert(seedRules); }
       catch (err) { reportCloudError("Failed to seed commission_rules", err); }
     }
 
     // Company profile
     try {
-      const compResult = await supabase!.from("company_profile").insert({
-        id: `company-${suffix}`,
-        ...tag,
-        ...seedData.company,
+      await supabase!.from("company_profile").insert({
+        id: `company-${suffix}`, ...tag, ...seedData.company,
       });
-      console.log("[resetData] company_profile insert:", compResult.error ?? "OK");
     } catch (err) { reportCloudError("Failed to seed company_profile", err); }
 
-    console.log("[resetData] all inserts done, applying local seed state");
+    // Trips — insert in batches of 20 to avoid request size limits
+    const seedTripsTagged = seedData.trips.map((t) => ({
+      ...t,
+      ...tag,
+      id: `${t.id}-${suffix}`,
+      driver_id: empIdMap[t.driver_id] ?? t.driver_id,
+      helper_ids: t.helper_ids.map((h) => empIdMap[h] ?? h),
+      vehicle_id: vehIdMap[t.vehicle_id] ?? t.vehicle_id,
+      created_by: resolvedTenantId,
+    }));
+    const BATCH = 20;
+    for (let i = 0; i < seedTripsTagged.length; i += BATCH) {
+      const batch = seedTripsTagged.slice(i, i + BATCH);
+      try { await supabase!.from("trips").insert(batch); }
+      catch (err) { reportCloudError(`Failed to seed trips batch ${i}`, err); }
+    }
 
-    // ── 3. Apply seed to local state immediately ─────────────────────────────
-    // Build a local copy with the suffixed IDs matching what we inserted.
-    // Do NOT call loadFromSupabase() after this — it has "only overlay if
-    // length > 0" guards that race with the inserts and can wipe this state.
-    // (suffix and empIdMap already declared in block 2 above)
-    const localSeed: AppData = {
-      ...JSON.parse(JSON.stringify(seedData)),
-      trips: [],
-      customers: [],
-      employees: seedData.employees
-        .filter((e) => e.role === "driver" || e.role === "helper")
-        .map((e) => ({ ...e, id: `${e.id}-${suffix}` })),
-      vehicles: seedData.vehicles.map((v) => ({
-        ...v,
-        id: `${v.id}-${suffix}`,
-        plate_number: `${v.plate_number}-${suffix}`,
-        driver_id: v.driver_id ? (empIdMap[v.driver_id] ?? null) : null,
-      })),
-      commissionRules: seedData.commissionRules.map((r) => ({
-        ...r,
-        id: `${r.id}-${suffix}`,
-      })),
-      vehicleTypes: [...seedData.vehicleTypes],
-    };
-
-    // Mark initialized so the auto-load on next render doesn't overwrite
-    // this freshly seeded state with empty arrays from the cloud.
-    initialized = true;
-    apply(localSeed);
-    console.log("[resetData] apply done — employees:", state.employees.length, "vehicles:", state.vehicles.length, "vehicleTypes:", state.vehicleTypes.length, "commissionRules:", state.commissionRules.length);
-    return;
+    // Customers
+    const seedCustomers = seedData.customers.map((c) => ({
+      ...c, ...tag,
+      id: `${c.id}-${suffix}`,
+      phone_number: `${c.phone_number}-${suffix}`,
+    }));
+    if (seedCustomers.length > 0) {
+      try { await supabase!.from("customers").insert(seedCustomers); }
+      catch (err) { reportCloudError("Failed to seed customers", err); }
+    }
   }
 
-  // Local mode: reset to a deep copy of seedData so mutations don't bleed
-  localStorage.removeItem(STORAGE_KEY);
-  state = JSON.parse(JSON.stringify(seedData)) as AppData;
-  emit();
+  // Apply full seed locally with suffixed ids
+  const userId = currentUserId ?? "local";
+  const suffix = isConfigured ? userId.slice(0, 8) : "demo";
+  const empIdMap: Record<string, string> = {};
+  seedData.employees.forEach((e) => { empIdMap[e.id] = `${e.id}-${suffix}`; });
+  const vehIdMap: Record<string, string> = {};
+  seedData.vehicles.forEach((v) => { vehIdMap[v.id] = `${v.id}-${suffix}`; });
+
+  const localDemo: AppData = {
+    users: state.users,
+    vehicleTypes: [...seedData.vehicleTypes],
+    company: { ...seedData.company },
+    employees: seedData.employees
+      .filter((e) => e.role === "driver" || e.role === "helper")
+      .map((e) => ({ ...e, id: `${e.id}-${suffix}` })),
+    vehicles: seedData.vehicles.map((v) => ({
+      ...v,
+      id: `${v.id}-${suffix}`,
+      plate_number: isConfigured ? `${v.plate_number}-${suffix}` : v.plate_number,
+      driver_id: v.driver_id ? (empIdMap[v.driver_id] ?? undefined) : undefined,
+    })),
+    commissionRules: seedData.commissionRules.map((r) => ({ ...r, id: `${r.id}-${suffix}` })),
+    trips: seedData.trips.map((t) => ({
+      ...t,
+      id: `${t.id}-${suffix}`,
+      driver_id: empIdMap[t.driver_id] ?? t.driver_id,
+      helper_ids: t.helper_ids.map((h) => empIdMap[h] ?? h),
+      vehicle_id: vehIdMap[t.vehicle_id] ?? t.vehicle_id,
+    })),
+    customers: seedData.customers.map((c) => ({
+      ...c,
+      id: `${c.id}-${suffix}`,
+      phone_number: isConfigured ? `${c.phone_number}-${suffix}` : c.phone_number,
+    })),
+    payrollLedger: [],
+  };
+
+  initialized = true;
+  apply(localDemo);
 };
 
 // ---------- Hook ----------
