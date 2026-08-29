@@ -132,6 +132,26 @@ export function setCurrentRole(role: User["role"] | null, userId?: string | null
   if (userId !== undefined) currentUserId = userId;
 }
 
+/**
+ * Reset in-memory state on logout so the next login re-fetches from Supabase.
+ * Without this, a second owner logging in would see the previous owner's data.
+ */
+export function resetStore() {
+  initialized = false;
+  state = seedData;
+  emit();
+}
+
+/**
+ * Trigger a fresh Supabase load for the newly signed-in user.
+ * Called by AuthProvider after a new session is established.
+ */
+export function initStore() {
+  if (!isConfigured || initialized) return;
+  initialized = true;
+  loadFromSupabase().then(() => emit());
+}
+
 function requireOwner(action: string): void {
   if (currentUserRole && currentUserRole !== "owner") {
     throw new Error(`Permission denied: only the owner can ${action}.`);

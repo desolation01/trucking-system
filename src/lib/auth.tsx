@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import type { Role, User } from "../lib/types";
 import { supabase, isConfigured } from "../lib/supabase";
-import { auth as localAuth, setCurrentRole } from "../lib/store";
+import { auth as localAuth, setCurrentRole, resetStore, initStore } from "../lib/store";
 
 const SESSION_KEY = "trucking-ops-session";
 
@@ -142,6 +142,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setUser(u);
           // Pass userId so the store can scope tenant-level operations correctly.
           setCurrentRole(u.role, u.id);
+          // Kick off a fresh Supabase load for this tenant (no-op if already initialized).
+          initStore();
         }
     setLoading(false);
   }
@@ -173,11 +175,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localLogout();
       setUser(null);
       setCurrentRole(null, null);
+      resetStore();
       return;
     }
     await supabase!.auth.signOut();
     setUser(null);
     setCurrentRole(null, null);
+    resetStore();
   };
 
   const can = (...roles: Role[]) => (user ? roles.includes(user.role) : false);
