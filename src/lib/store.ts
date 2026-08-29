@@ -91,6 +91,7 @@ function saveLocal(state: AppData) {
 
 let state: AppData = loadLocal();
 let currentUserRole: User["role"] | null = null;
+let currentUserId: string | null = null;
 
 let initialized = false;
 const listeners = new Set<() => void>();
@@ -122,12 +123,13 @@ function emit() {
 }
 
 /**
- * Set the current user's role for client-side authorization checks.
+ * Set the current user's role and id for client-side authorization checks.
  * Called by AuthProvider when the authenticated user changes.
  * For local mode, the role is read from the local users record.
  */
-export function setCurrentRole(role: User["role"] | null) {
+export function setCurrentRole(role: User["role"] | null, userId?: string | null) {
   currentUserRole = role;
+  if (userId !== undefined) currentUserId = userId;
 }
 
 function requireOwner(action: string): void {
@@ -589,10 +591,16 @@ export const tripActions = {
                   try { requireOwner("delete all trips"); } catch (e) { console.warn("[Auth]", e); throw e; }
                   if (isConfigured) {
                     try {
-                      const { error } = await supabase!.from("trips").delete().neq("id", "");
+                      // Scope delete to the current tenant only — never touch other owners' rows.
+                      const tenantId = currentUserId;
+                      if (!tenantId) {
+                        throw new Error("Cannot delete trips: no authenticated user found.");
+                      }
+                      const { error } = await supabase!.from("trips").delete().eq("owner_id", tenantId);
                       if (error) reportCloudError("Failed to delete all trips", error);
                                           } catch (err) {
                                             reportCloudError("Exception deleting all trips", err);
+                                            throw err;
                     }
                   }
                   mutate((draft) => {
@@ -1040,10 +1048,45 @@ export const settingsActions = {
 
 // ---------- Reset ----------
 
-export const resetData = () => {
+export const resetData = async () => {
   try { requireOwner("reset all data"); } catch (e) { console.warn("[Auth]", e); throw e; }
+
+  if (isConfigured) {
+    const tenantId = currentUserId;
+    if (!tenantId) throw new Error("Cannot reset: no authenticated user found.");
+
+    // Delete all tenant-scoped data from Supabase in safe dependency order
+    const tables = [
+      "calc_logs",
+      "payroll_ledger",
+      "trips",
+      "customers",
+      "employees",
+      "vehicles",
+      "vehicle_types",
+      "commission_rules",
+      "company_profile",
+    ] as const;
+
+    for (const table of tables) {
+      try {
+        const { error } = await supabase!.from(table).delete().eq("owner_id", tenantId);
+        if (error) reportCloudError(`Failed to reset table "${table}"`, error);
+      } catch (err) {
+        reportCloudError(`Exception resetting table "${table}"`, err);
+      }
+    }
+
+    // After cloud wipe, reload fresh data from Supabase
+    initialized = false;
+    await loadFromSupabase();
+    emit();
+    return;
+  }
+
+  // Local mode: reset to a deep copy of seedData so mutations don't bleed
   localStorage.removeItem(STORAGE_KEY);
-  state = seedData;
+  state = JSON.parse(JSON.stringify(seedData)) as AppData;
   emit();
 };
 

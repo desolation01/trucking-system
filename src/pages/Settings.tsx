@@ -168,9 +168,9 @@ export function Settings() {
               <Button variant="secondary" onClick={() => setConfirmReset(false)}>Cancel</Button>
               <Button
               variant="danger"
-              onClick={() => {
+              onClick={async () => {
                 try {
-                  resetData();
+                  await resetData();
                   setConfirmReset(false);
                   toast("Data reset to defaults", "info");
                 } catch (e: any) {

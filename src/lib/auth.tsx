@@ -136,11 +136,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // it is client-supplied at signUp time and would let anyone claim "owner".
         // (C2 fix — SECURITY-AUDIT.md)
         setUser(null);
-        setCurrentRole(null);
+        setCurrentRole(null, null);
       } else {
           const u = mapProfileToUser({ ...data[0], email: data[0].email ?? "" });
           setUser(u);
-          setCurrentRole(u.role);
+          // Pass userId so the store can scope tenant-level operations correctly.
+          setCurrentRole(u.role, u.id);
         }
     setLoading(false);
   }
@@ -152,7 +153,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (raw) {
         const u = JSON.parse(raw) as User;
         setUser(u);
-        setCurrentRole(u.role);
+        setCurrentRole(u.role, u.id);
       }
       return result;
     }
@@ -171,20 +172,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!isConfigured) {
       localLogout();
       setUser(null);
-      setCurrentRole(null);
+      setCurrentRole(null, null);
       return;
     }
     await supabase!.auth.signOut();
     setUser(null);
-    setCurrentRole(null);
+    setCurrentRole(null, null);
   };
 
   const can = (...roles: Role[]) => (user ? roles.includes(user.role) : false);
 
-  // Sync the current role with the store so client-side authorization
-  // checks in tripActions/userActions/etc. can enforce role boundaries.
+  // Sync the current role and id with the store so client-side authorization
+  // checks in tripActions/userActions/etc. can enforce role boundaries and
+  // correctly scope tenant-level mutations (deleteAll, resetData).
   useEffect(() => {
-    setCurrentRole(user?.role ?? null);
+    setCurrentRole(user?.role ?? null, user?.id ?? null);
   }, [user]);
 
   return (
