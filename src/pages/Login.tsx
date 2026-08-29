@@ -241,7 +241,6 @@ export function Login() {
                       minLength={6}
                       aria-invalid={Boolean(error)}
                       aria-describedby={error ? "login-error password-help" : "password-help"}
-                      placeholder="••••••••"
                     />
                     <button
                       type="button"
