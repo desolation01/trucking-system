@@ -365,21 +365,24 @@ export function Layout({
         {renderSection(opsItems, "Operations")}
         {renderSection(adminItems, "Administration")}
       </nav>
-      <div className="flex items-center gap-3 border-t border-edge px-4 py-4">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-sky-50 text-sm font-semibold text-brand">
-          {user?.name?.slice(0, 1).toUpperCase()}
-        </div>
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-semibold text-ink">{user?.name}</p>
-          <p className="truncate text-[11px] font-medium text-muted">{user?.email}</p>
+      <div className="space-y-2 border-t border-edge px-4 py-4">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-sky-50 text-sm font-semibold text-brand">
+            {user?.name?.slice(0, 1).toUpperCase()}
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-semibold text-ink">{user?.name}</p>
+            <p className="truncate text-[11px] font-medium text-muted">{user?.email}</p>
+          </div>
         </div>
         <button
           onClick={logout}
           title="Sign out"
           aria-label="Sign out"
-          className="rounded-lg p-2 text-muted transition-colors hover:bg-red-50 hover:text-red-600"
+          className="flex min-h-10 w-full items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm font-semibold text-red-600 transition-colors hover:bg-red-100 dark:border-red-900/40 dark:bg-red-950/30 dark:text-red-400 dark:hover:bg-red-950/50"
         >
-          <LogOut className="h-4 w-4" />
+          <LogOut className="h-4 w-4 shrink-0" />
+          Sign out
         </button>
       </div>
     </div>
