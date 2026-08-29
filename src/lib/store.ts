@@ -172,7 +172,7 @@ async function loadFromSupabase(): Promise<void> {
   if (!isConfigured || initialized) return;
 
   // Timeout — don't let Supabase loading block the app
-    const TIMEOUT_MS = 3_000;
+    const TIMEOUT_MS = 8_000;
   const timeout = new Promise<void>((_, reject) =>
     setTimeout(() => reject(new Error("Supabase load timed out")), TIMEOUT_MS)
   );
@@ -218,8 +218,8 @@ async function loadFromSupabase(): Promise<void> {
           fetchAll<Trip>("trips"),
           fetchAll<CommissionRule>("commission_rules"),
           fetchAll<Customer>("customers"),
-          fetchVehicleTypes(),
-          fetchCompanyProfile(),
+          fetchVehicleTypes(resolvedTenantId),
+          fetchCompanyProfile(resolvedTenantId),
         ]),
         timeout,
       ]) as any;
@@ -282,13 +282,17 @@ async function fetchProfilesWithFallback(): Promise<User[]> {
     }));
 }
 
-async function fetchVehicleTypes(): Promise<string[]> {
-  const { data } = await supabase!.from("vehicle_types").select("name");
+async function fetchVehicleTypes(tenantId?: string | null): Promise<string[]> {
+  let query = supabase!.from("vehicle_types").select("name");
+  if (tenantId) query = (query as any).eq("owner_id", tenantId);
+  const { data } = await query;
   return (data ?? []).map((r: VehicleTypeRow) => r.name);
 }
 
-async function fetchCompanyProfile(): Promise<AppData["company"]> {
-  const { data } = await supabase!.from("company_profile").select("*").limit(1).maybeSingle();
+async function fetchCompanyProfile(tenantId?: string | null): Promise<AppData["company"]> {
+  let query = supabase!.from("company_profile").select("*").limit(1);
+  if (tenantId) query = (query as any).eq("owner_id", tenantId);
+  const { data } = await (query as any).maybeSingle();
   if (!data) return { ...seedData.company };
     return {
       name: (data as CompanyProfileRow).name,
@@ -1198,7 +1202,34 @@ export const resetData = async () => {
       });
     } catch (err) { reportCloudError("Failed to seed company_profile", err); }
 
-    // ── 3. Reload fresh state from Supabase ───────────────────────────────────
+    // ── 3. Apply seed to local state immediately so UI updates right away ────
+    // Build a local seed copy with the suffixed IDs matching what we inserted
+    const suffix = resolvedTenantId.slice(0, 8);
+    const empIdMap: Record<string, string> = {};
+    seedData.employees.forEach((e) => { empIdMap[e.id] = `${e.id}-${suffix}`; });
+
+    const localSeed: AppData = {
+      ...JSON.parse(JSON.stringify(seedData)),
+      trips: [],
+      customers: [],
+      employees: seedData.employees
+        .filter((e) => e.role === "driver" || e.role === "helper")
+        .map((e) => ({ ...e, id: `${e.id}-${suffix}` })),
+      vehicles: seedData.vehicles.map((v) => ({
+        ...v,
+        id: `${v.id}-${suffix}`,
+        plate_number: `${v.plate_number}-${suffix}`,
+        driver_id: v.driver_id ? (empIdMap[v.driver_id] ?? null) : null,
+      })),
+      commissionRules: seedData.commissionRules.map((r) => ({
+        ...r,
+        id: `${r.id}-${suffix}`,
+      })),
+      vehicleTypes: [...seedData.vehicleTypes],
+    };
+    apply(localSeed);
+
+    // ── 4. Reload from Supabase to confirm cloud state ────────────────────────
     initialized = false;
     await loadFromSupabase();
     emit();
