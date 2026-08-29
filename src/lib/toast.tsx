@@ -68,36 +68,40 @@ const variantConfig: Record<
     bg: string;
     iconBg: string;
     iconColor: string;
-    textColor: string;
+    titleColor: string;
+    msgColor: string;
     barColor: string;
     Icon: React.ComponentType<{ className?: string }>;
   }
 > = {
   success: {
-    border: "border-emerald-500",
-    bg: "bg-emerald-500/15",
-    iconBg: "bg-emerald-500",
+    border: "border-emerald-600",
+    bg: "bg-emerald-600",
+    iconBg: "bg-emerald-700",
     iconColor: "text-white",
-    textColor: "text-emerald-50",
-    barColor: "bg-emerald-400",
+    titleColor: "text-white",
+    msgColor: "text-emerald-100",
+    barColor: "bg-emerald-300",
     Icon: CheckCircle,
   },
   error: {
-    border: "border-red-500",
-    bg: "bg-red-500/15",
-    iconBg: "bg-red-500",
+    border: "border-red-600",
+    bg: "bg-red-600",
+    iconBg: "bg-red-700",
     iconColor: "text-white",
-    textColor: "text-red-50",
-    barColor: "bg-red-400",
+    titleColor: "text-white",
+    msgColor: "text-red-100",
+    barColor: "bg-red-300",
     Icon: XCircle,
   },
   info: {
-    border: "border-blue-500",
-    bg: "bg-blue-500/15",
-    iconBg: "bg-blue-500",
+    border: "border-blue-600",
+    bg: "bg-blue-600",
+    iconBg: "bg-blue-700",
     iconColor: "text-white",
-    textColor: "text-blue-50",
-    barColor: "bg-blue-400",
+    titleColor: "text-white",
+    msgColor: "text-blue-100",
+    barColor: "bg-blue-300",
     Icon: AlertCircle,
   },
 };
@@ -130,7 +134,7 @@ function ToastItem({
   return (
     <div
       className={cx(
-        "pointer-events-auto relative flex items-start gap-3.5 overflow-hidden rounded-xl border-2 p-4 shadow-xl backdrop-blur-md",
+        "pointer-events-auto relative flex items-start gap-3.5 overflow-hidden rounded-xl border-2 p-4 shadow-xl",
         "min-w-[300px] max-w-[420px]",
         "animate-slide-up",
         cfg.border,
@@ -157,10 +161,10 @@ function ToastItem({
 
       {/* Message */}
       <div className="min-w-0 flex-1 pt-0.5">
-        <p className={cx("text-sm font-semibold leading-snug", cfg.textColor)}>
+        <p className={cx("text-sm font-semibold leading-snug", cfg.titleColor)}>
           {t.variant === "success" ? "Success" : t.variant === "error" ? "Error" : "Notice"}
         </p>
-        <p className="mt-0.5 text-xs font-medium leading-relaxed text-white/70">
+        <p className={cx("mt-0.5 text-xs font-medium leading-relaxed", cfg.msgColor)}>
           {t.message}
         </p>
       </div>
@@ -168,7 +172,7 @@ function ToastItem({
       {/* Dismiss */}
       <button
         onClick={() => onDismiss(t.id)}
-        className="absolute right-2.5 top-2.5 rounded p-0.5 text-white/50 transition-colors hover:bg-white/10 hover:text-white/90"
+        className="absolute right-2.5 top-2.5 rounded p-0.5 text-white/60 transition-colors hover:bg-white/10 hover:text-white"
         aria-label="Dismiss"
       >
         <X className="h-3.5 w-3.5" />
