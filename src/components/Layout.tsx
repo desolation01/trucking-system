@@ -371,9 +371,7 @@ export function Layout({
         </div>
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-semibold text-ink">{user?.name}</p>
-          <p className="truncate text-[11px] font-medium text-muted">
-            {user?.role === "owner" ? "Owner / Admin" : user?.role === "staff" ? "Office Staff" : "Accountant"}
-          </p>
+          <p className="truncate text-[11px] font-medium text-muted">{user?.email}</p>
         </div>
         <button
           onClick={logout}
