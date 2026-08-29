@@ -25,7 +25,8 @@
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI",
     Roboto, "Helvetica Neue", Arial, sans-serif;
-  --font-display: "Space Grotesk", "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI",
+    Roboto, "Helvetica Neue", Arial, sans-serif;
 
   /* ── Type scale ─────────────────────────────────────────── */
   --text-xs: 0.75rem;
@@ -101,9 +102,9 @@
   --color-violet-600: var(--violet-600);
   --color-violet-700: var(--violet-700);
 
-  /* ── Shadows (resolved per theme) ────────────────────────── */
-  --shadow-card: 0 1px 2px 0 var(--sh-card-a), 0 1px 3px 0 var(--sh-card-b);
-  --shadow-card-hover: 0 4px 12px -2px var(--sh-hover-a), 0 2px 4px 0 var(--sh-hover-b);
+  /* ── Shadows (ambient, blue-tinted) ────────────────────── */
+  --shadow-card: 0 1px 2px 0 var(--sh-card-a), 0 8px 24px -8px var(--sh-card-b);
+  --shadow-card-hover: 0 12px 32px -8px var(--sh-hover-a), 0 2px 4px 0 var(--sh-hover-b);
   --shadow-glow: 0 2px 12px -2px var(--sh-glow);
   --shadow-dropdown: 0 8px 24px -4px var(--sh-drop-a), 0 2px 8px 0 var(--sh-drop-b);
 }
@@ -115,30 +116,35 @@
   color-scheme: light;
 
   /* ── Surfaces ─────────────────────────────────────────── */
-  --surface: #f3f4f6;
-  --panel: #e8ecf0;
+  --surface: #f9f9ff;
+  --panel: #ffffff;
   --card: #ffffff;
-  --card-soft: #eef1f5;
+  --card-soft: #f0f3ff;
   --elevated: #ffffff;
-  --edge: #dce0e7;
-  --edge-strong: #c4cad6;
+  --edge: #e3e8f4;
+  --edge-strong: #c3c6d4;
 
   /* ── Text hierarchy (WCAG AA+ on card #fff) ──────────── */
-  --ink: #111827;         /* 15.2:1 — body, headings */
-  --ink-soft: #374151;    /* 10.4:1 — secondary text */
-  --muted: #6b7280;       /* 5.5:1  — labels, meta (AA) */
+  --ink: #121c2c;         /* 16.5:1 — body, headings */
+  --ink-soft: #424752;    /* 9.6:1  — secondary text */
+  --muted: #5b6472;       /* 5.9:1  — labels, meta (AA) */
 
-  /* ── Brand: amber accent ─────────────────────────────── */
-  --brand-50: rgb(245 158 11 / 0.1);
-  --brand-100: rgb(245 158 11 / 0.16);
-  --brand-300: #b45309;
-  --brand-400: #d97706;
-  --brand: #f59e0b;
-  --brand-strong: #d97706;
-  --brand-800: #b45309;
-  --brand-soft: rgb(245 158 11 / 0.12);
-  --brand-ring: rgb(217 119 6 / 0.35);
-  --on-brand: #1c1917;
+  /* ── Brand: soft-shell blue ──────────────────────────── */
+  --brand-50: rgb(26 88 183 / 0.08);
+  --brand-100: rgb(26 88 183 / 0.14);
+  --brand-300: #3d72d2;
+  --brand-400: #2a66c9;
+  --brand: #1a58b7;
+  --brand-strong: #154a9c;
+  --brand-800: #0f3a7d;
+  --brand-soft: rgb(26 88 183 / 0.09);
+  --brand-ring: rgb(26 88 183 / 0.22);
+  --on-brand: #ffffff;
+  --chart-blue: #1a58b7;
+  --chart-teal: #3fae94;
+  --chart-amber: #e8a33d;
+  --chart-red: #ba1a1a;
+  --chart-grid: #e5eaf5;
 
   /* ── Panel / sidebar ──────────────────────────────────── */
   --panel-edge: rgb(17 24 39 / 0.08);
@@ -146,26 +152,28 @@
   --panel-ink-strong: #111827;
   --panel-soft: #ffffff;
 
-  /* ── Semantic colors ──────────────────────────────────── */
-  --emerald-50: #ecfdf5;
-  --emerald-100: #d1fae5;
-  --emerald-300: #047857;
-  --emerald-400: #059669;
-  --emerald-500: #059669;
-  --emerald-600: #047857;
-  --emerald-700: #065f46;
-  --sky-50: #f0f9ff;
-  --sky-100: #e0f2fe;
-  --sky-300: #0284c7;
-  --sky-400: #0284c7;
-  --sky-500: #0369a1;
-  --sky-600: #075985;
-  --sky-700: #0c4a6e;
+  /* ── Semantic colors (pill tints: 15% bg + full-sat text) ── */
+  --emerald-50: #e7f6ee;
+  --emerald-100: #d3efdf;
+  --emerald-300: #1d7a4c;
+  --emerald-400: #1d9e63;
+  --emerald-500: #178a56;
+  --emerald-600: #14704a;
+  --emerald-700: #115c3e;
+  --sky-50: #e7eeff;
+  --sky-100: #d8e2ff;
+  --sky-300: #1a58b7;
+  --sky-400: #1a58b7;
+  --sky-500: #154a9c;
+  --sky-600: #134688;
+  --sky-700: #0f3a7d;
+  --red-50: #fdecec;
   --red-300: #b91c1c;
   --red-400: #dc2626;
   --red-500: #dc2626;
   --red-600: #b91c1c;
   --red-700: #991b1b;
+  --amber-50: #fdf3e3;
   --amber-300: #b45309;
   --amber-400: #d97706;
   --amber-500: #d97706;
@@ -183,14 +191,14 @@
   --violet-600: #5b21b6;
   --violet-700: #4c1d95;
 
-  /* ── Shadows ──────────────────────────────────────────── */
-  --sh-card-a: rgb(0 0 0 / 0.04);
-  --sh-card-b: rgb(0 0 0 / 0.06);
-  --sh-hover-a: rgb(0 0 0 / 0.08);
-  --sh-hover-b: rgb(0 0 0 / 0.05);
-  --sh-glow: rgb(245 158 11 / 0.35);
-  --sh-drop-a: rgb(0 0 0 / 0.1);
-  --sh-drop-b: rgb(0 0 0 / 0.06);
+  /* ── Shadows (ambient, blue-tinted) ───────────────────── */
+  --sh-card-a: rgb(18 28 44 / 0.05);
+  --sh-card-b: rgb(18 28 44 / 0.05);
+  --sh-hover-a: rgb(18 28 44 / 0.09);
+  --sh-hover-b: rgb(18 28 44 / 0.06);
+  --sh-glow: rgb(26 88 183 / 0.25);
+  --sh-drop-a: rgb(18 28 44 / 0.14);
+  --sh-drop-b: rgb(18 28 44 / 0.08);
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -213,17 +221,22 @@
   --ink-soft: #9ca3af;    /* 7.8:1  — secondary text */
   --muted: #6b7280;       /* 5.2:1  — labels, meta (AA) */
 
-  /* ── Brand: amber accent ─────────────────────────────── */
-  --brand-50: rgb(245 158 11 / 0.16);
-  --brand-100: rgb(245 158 11 / 0.26);
-  --brand-300: #fcd34d;
-  --brand-400: #fbbf24;
-  --brand: #f59e0b;
-  --brand-strong: #fbbf24;
-  --brand-800: #fcd34d;
-  --brand-soft: rgb(245 158 11 / 0.15);
-  --brand-ring: rgb(251 191 36 / 0.35);
-  --on-brand: #1c1917;
+  /* ── Brand ─────────────────────────────────────────────── */
+  --brand-50: rgb(134 173 239 / 0.14);
+  --brand-100: rgb(134 173 239 / 0.22);
+  --brand-300: #aec6ff;
+  --brand-400: #8fb3f5;
+  --brand: #2f66c9;
+  --brand-strong: #4c7fd8;
+  --brand-800: #d8e2ff;
+  --brand-soft: rgb(134 173 239 / 0.14);
+  --brand-ring: rgb(134 173 239 / 0.35);
+  --on-brand: #ffffff;
+  --chart-blue: #60a5fa;
+  --chart-teal: #4cc3a7;
+  --chart-amber: #f0b45c;
+  --chart-red: #f87171;
+  --chart-grid: #293244;
 
   /* ── Panel / sidebar ──────────────────────────────────── */
   --panel-edge: rgb(255 255 255 / 0.07);
@@ -239,18 +252,20 @@
   --emerald-500: #22c55e;
   --emerald-600: #16a34a;
   --emerald-700: #4ade80;
-  --sky-50: #082f49;
-  --sky-100: #0c4a6e;
-  --sky-300: #7dd3fc;
-  --sky-400: #38bdf8;
-  --sky-500: #0ea5e9;
-  --sky-600: #0284c7;
-  --sky-700: #38bdf8;
+  --sky-50: #0c1830;
+  --sky-100: #12264a;
+  --sky-300: #aec6ff;
+  --sky-400: #8fb3f5;
+  --sky-500: #8fb3f5;
+  --sky-600: #a5c2ff;
+  --sky-700: #d8e2ff;
+  --red-50: #2f1517;
   --red-300: #fca5a5;
   --red-400: #f87171;
   --red-500: #ef4444;
   --red-600: #dc2626;
   --red-700: #b91c1c;
+  --amber-50: #2a2110;
   --amber-300: #fcd34d;
   --amber-400: #fbbf24;
   --amber-500: #f59e0b;
@@ -273,7 +288,7 @@
   --sh-card-b: rgb(0 0 0 / 0.25);
   --sh-hover-a: rgb(0 0 0 / 0.45);
   --sh-hover-b: rgb(0 0 0 / 0.35);
-  --sh-glow: rgb(245 158 11 / 0.45);
+  --sh-glow: rgb(134 173 239 / 0.35);
   --sh-drop-a: rgb(0 0 0 / 0.45);
   --sh-drop-b: rgb(0 0 0 / 0.3);
 }
@@ -347,6 +362,17 @@
       var(--brand) 0 12px,
       var(--on-brand) 12px 24px
     );
+  }
+  @keyframes marquee {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(-50%);
+    }
+  }
+  .animate-marquee {
+    animation: marquee 32s linear infinite;
   }
 }
 

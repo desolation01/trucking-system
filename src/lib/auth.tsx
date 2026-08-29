@@ -101,10 +101,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }, []);
 
   async function fetchProfile(userId: string) {
-      const { data, error } = await supabase!
+      let { data, error } = await supabase!
         .from("profiles")
         .select("*")
         .eq("id", userId);
+
+      // Self-heal: auth user exists but has no profile row. This happens for
+      // accounts created before the profile-insert policy existed, or when
+      // email confirmation meant the signup-time insert ran without a session
+      // and was denied by RLS. Migration 009's policy lets an authenticated
+      // user insert exactly one self-owned owner profile, so provision it now
+      // instead of leaving the account permanently stuck on the login screen.
+      if (!error && (!data || data.length === 0)) {
+        const { data: { user } } = await supabase!.auth.getUser();
+        if (user && user.id === userId) {
+          await supabase!.from("profiles").upsert(
+            {
+              id: userId,
+              name: (user.user_metadata?.name as string | undefined) || "Owner",
+              role: "owner",
+              status: "active",
+            },
+            { onConflict: "id", ignoreDuplicates: true }
+          );
+          ({ data, error } = await supabase!
+            .from("profiles")
+            .select("*")
+            .eq("id", userId));
+        }
+      }
 
       if (error || !data || data.length === 0) {
         // No profile row = unprovisioned account. NEVER trust user_metadata.role:

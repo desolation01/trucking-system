@@ -44,9 +44,10 @@ export function Employees() {
         {(["all", "driver", "helper", "staff"] as const).map((r) => (
           <button
             key={r}
-            onClick={() => setTab(r)}
+              onClick={() => setTab(r)}
+              aria-pressed={tab === r}
             className={cx(
-              "rounded-lg px-3 py-1.5 text-xs font-medium capitalize transition-all duration-150",
+              "min-h-11 rounded-lg px-3 py-1.5 text-xs font-medium capitalize transition-all duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand",
               tab === r ? "bg-brand text-on-brand shadow-glow" : "bg-card text-ink-soft ring-1 ring-edge hover:bg-card-soft"
             )}
           >
@@ -57,7 +58,7 @@ export function Employees() {
 
       <div className="overflow-hidden rounded-xl border border-edge bg-card shadow-card">
         <div className="overflow-x-auto">
-          <table className="w-full border-collapse">
+          <table className="w-full border-collapse" aria-label="Employee directory">
             <thead className="bg-card-soft">
               <tr>
                 <Th>Name</Th>
@@ -86,10 +87,10 @@ export function Employees() {
                   </Td>
                   <Td className="text-right">
                     <div className="flex justify-end gap-1">
-                      <button onClick={() => { setEditing(e); setFormOpen(true); }} className="rounded-lg p-1.5 text-muted transition-all duration-150 hover:bg-brand-soft hover:text-amber-500 dark:hover:text-amber-400 active:scale-95">
+                      <button onClick={() => { setEditing(e); setFormOpen(true); }} aria-label={`Edit employee ${e.name}`} className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl p-1.5 text-muted transition-all duration-150 hover:bg-brand-soft hover:text-brand active:scale-95">
                         <Pencil className="h-4 w-4" />
                       </button>
-                      <button onClick={() => setConfirmDelete(e)} className="rounded-lg p-1.5 text-muted transition-all duration-150 hover:bg-red-500/10 hover:text-red-500 dark:hover:text-red-400 active:scale-95">
+                      <button onClick={() => setConfirmDelete(e)} aria-label={`Delete employee ${e.name}`} className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl p-1.5 text-muted transition-all duration-150 hover:bg-red-50 hover:text-red-600 active:scale-95">
                         <Trash2 className="h-4 w-4" />
                       </button>
                     </div>
@@ -155,9 +156,9 @@ export function Employees() {
       )}
 
       {confirmDelete && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 backdrop-blur-sm p-4">
-          <div className="w-full max-w-sm rounded-xl bg-card p-5 shadow-dropdown">
-            <h3 className="text-base font-semibold text-ink">Delete employee?</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 backdrop-blur-sm p-4">
+          <div role="dialog" aria-modal="true" aria-labelledby="delete-employee-title" className="w-full max-w-sm rounded-xl bg-card p-5 shadow-dropdown">
+            <h3 id="delete-employee-title" className="text-base font-semibold text-ink">Delete employee?</h3>
             <p className="mt-1 text-sm leading-relaxed text-muted">{confirmDelete.name} will be removed.</p>
             <div className="mt-5 flex justify-end gap-2">
               <Button variant="secondary" onClick={() => setConfirmDelete(undefined)}>Cancel</Button>

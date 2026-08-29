@@ -170,8 +170,10 @@ export function DieselDistribution() {
 
       {/* Search */}
       <div className="relative mb-4">
+        <label htmlFor="diesel-search" className="sr-only">Search diesel trips</label>
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
         <input
+          id="diesel-search"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search by Transportify ID, driver, customer…"
@@ -296,7 +298,7 @@ export function DieselDistribution() {
 
       {/* History Panel */}
       {showLogs && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center bg-slate-950/50 p-4 pt-[8vh] backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-start justify-center bg-ink/40 p-4 pt-[8vh] backdrop-blur-sm">
           <div className="w-full max-w-2xl overflow-hidden rounded-xl border border-edge bg-card shadow-dropdown">
             <div className="flex items-center justify-between border-b border-edge/70 px-5 py-4">
               <h3 className="font-display text-base font-semibold text-ink">
@@ -345,7 +347,7 @@ export function DieselDistribution() {
 
       {/* Distribution Modal */}
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-950/50 p-4 backdrop-blur-sm sm:items-center">
+        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-ink/40 p-4 backdrop-blur-sm sm:items-center">
           <div className="my-8 w-full max-w-lg rounded-xl border border-edge bg-card shadow-dropdown">
             <div className="flex items-center justify-between border-b border-edge/70 px-5 py-4">
               <h3 className="font-display text-base font-semibold text-ink">

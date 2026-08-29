@@ -1,0 +1,355 @@
+<!DOCTYPE html><html class="light" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>FleetCentral ERP Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-secondary-container": "#626361",
+                        "on-surface": "#121c2c",
+                        "on-secondary": "#ffffff",
+                        "surface-container-lowest": "#ffffff",
+                        "primary-container": "#3d72d2",
+                        "on-primary-fixed-variant": "#004397",
+                        "inverse-primary": "#aec6ff",
+                        "on-tertiary-fixed": "#2a1700",
+                        "surface-bright": "#f9f9ff",
+                        "on-tertiary-fixed-variant": "#653e00",
+                        "secondary-container": "#e0e0dd",
+                        "primary-fixed": "#d8e2ff",
+                        "secondary-fixed-dim": "#c7c6c4",
+                        "on-primary-container": "#fefcff",
+                        "on-primary": "#ffffff",
+                        "secondary": "#5e5f5c",
+                        "surface-container-highest": "#d9e3f9",
+                        "on-error-container": "#93000a",
+                        "on-surface-variant": "#424752",
+                        "surface": "#f9f9ff",
+                        "on-secondary-fixed-variant": "#464745",
+                        "on-background": "#121c2c",
+                        "primary": "#1a58b7",
+                        "background": "#f9f9ff",
+                        "inverse-on-surface": "#ebf1ff",
+                        "tertiary": "#825100",
+                        "surface-dim": "#d0daf0",
+                        "on-tertiary": "#ffffff",
+                        "on-primary-fixed": "#001a43",
+                        "outline": "#737784",
+                        "surface-container-high": "#dee8ff",
+                        "on-secondary-fixed": "#1b1c1a",
+                        "primary-fixed-dim": "#aec6ff",
+                        "secondary-fixed": "#e3e2df",
+                        "on-error": "#ffffff",
+                        "surface-variant": "#d9e3f9",
+                        "on-tertiary-container": "#fffbff",
+                        "outline-variant": "#c3c6d4",
+                        "tertiary-fixed": "#ffddb8",
+                        "surface-container": "#e7eeff",
+                        "error-container": "#ffdad6",
+                        "error": "#ba1a1a",
+                        "tertiary-container": "#a46700",
+                        "surface-tint": "#1e5bba",
+                        "inverse-surface": "#273141",
+                        "tertiary-fixed-dim": "#ffb960",
+                        "surface-container-low": "#f0f3ff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "container-padding": "24px",
+                        "card-gap": "24px",
+                        "gutter": "20px",
+                        "section-margin": "40px",
+                        "unit": "8px"
+                    },
+                    "fontFamily": {},
+                    "fontSize": {
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<style>
+        body { background-color: #F7F6F3; }
+        .ambient-shadow { box-shadow: 0px 40px 60px -15px rgba(0,0,0,0.05); }
+    </style>
+</head>
+<body class="text-on-background font-sans antialiased overflow-x-hidden min-h-screen flex">
+<!-- SideNavBar -->
+<nav class="bg-surface dark:bg-inverse-surface h-screen w-72 flex flex-col fixed left-0 top-0 shadow-[40px_0_60px_-15px_rgba(0,0,0,0.05)] z-50">
+<div class="h-full p-6 flex flex-col gap-4">
+<!-- Header -->
+<div class="flex items-center gap-3 mb-8">
+<img alt="User profile photo" class="w-10 h-10 rounded-xl object-cover" data-alt="A modern, high-quality, abstract minimalist icon representing logistics and movement. The icon features interlocking, curved geometric shapes in a soft primary blue against a pristine white background. The style is flat, precise, and professional, suitable for a high-end enterprise resource planning software brand. Soft lighting, calm aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAZo7Vw7na5SuizJAwTFKs0MGF7AmyYP4ULsLyDS-V1mraUsP3OvBDfngRI8AMqyhWaBZv00RM-S6rURK8bknCOcciC-rCi7dWTskqwmJFVQhuP0WDq5GPPgyZlHJSFQofUhlnr07UNvqXLGHMyUFMYGBmemsSRx15rRYwaX0llZLEpZm8W3Q0hUGqjR-4I8LVKHHFY6Ix1oI-pOEFMLMQdvq9p173jrScEsmF5xXFEZsTcDoRd-URc">
+<div>
+<h1 class="text-headline-md font-headline-md font-bold text-primary dark:text-primary-fixed-dim">FleetCentral</h1>
+<p class="text-label-md font-label-md text-on-surface-variant">Trucking ERP</p>
+</div>
+</div>
+<!-- Tabs -->
+<div class="flex flex-col gap-2 flex-grow text-label-md font-label-md">
+<a class="flex items-center gap-3 px-4 py-3 bg-primary-container dark:bg-primary-fixed text-on-primary-container dark:text-on-primary-fixed rounded-xl scale-98 active:scale-95 transition-transform" href="#">
+<span class="material-symbols-outlined" data-weight="fill" style="font-variation-settings: 'FILL' 1;">dashboard</span>
+                    Dashboard
+                </a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant dark:text-surface-variant hover:bg-secondary-container dark:hover:bg-secondary hover:text-on-secondary-container dark:hover:text-on-secondary transition-all duration-300 rounded-xl scale-98 active:scale-95 transition-transform" href="#">
+<span class="material-symbols-outlined">local_shipping</span>
+                    Fleet Management
+                </a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant dark:text-surface-variant hover:bg-secondary-container dark:hover:bg-secondary hover:text-on-secondary-container dark:hover:text-on-secondary transition-all duration-300 rounded-xl scale-98 active:scale-95 transition-transform" href="#">
+<span class="material-symbols-outlined">route</span>
+                    Dispatch
+                </a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant dark:text-surface-variant hover:bg-secondary-container dark:hover:bg-secondary hover:text-on-secondary-container dark:hover:text-on-secondary transition-all duration-300 rounded-xl scale-98 active:scale-95 transition-transform" href="#">
+<span class="material-symbols-outlined">location_on</span>
+                    Route Tracking
+                </a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant dark:text-surface-variant hover:bg-secondary-container dark:hover:bg-secondary hover:text-on-secondary-container dark:hover:text-on-secondary transition-all duration-300 rounded-xl scale-98 active:scale-95 transition-transform" href="#">
+<span class="material-symbols-outlined">account_balance_wallet</span>
+                    Financials
+                </a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant dark:text-surface-variant hover:bg-secondary-container dark:hover:bg-secondary hover:text-on-secondary-container dark:hover:text-on-secondary transition-all duration-300 rounded-xl scale-98 active:scale-95 transition-transform" href="#">
+<span class="material-symbols-outlined">analytics</span>
+                    Reports
+                </a>
+</div>
+<!-- CTA -->
+<button class="w-full bg-primary text-on-primary py-3 rounded-xl text-label-md font-label-md font-bold mb-4 shadow-sm hover:shadow-md transition-shadow">
+                New Dispatch
+            </button>
+<!-- Footer Tabs -->
+<div class="flex flex-col gap-2 text-label-md font-label-md border-t border-outline-variant/30 pt-4">
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant dark:text-surface-variant hover:bg-secondary-container dark:hover:bg-secondary hover:text-on-secondary-container dark:hover:text-on-secondary transition-all duration-300 rounded-xl scale-98 active:scale-95 transition-transform" href="#">
+<span class="material-symbols-outlined">settings</span>
+                    Settings
+                </a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant dark:text-surface-variant hover:bg-secondary-container dark:hover:bg-secondary hover:text-on-secondary-container dark:hover:text-on-secondary transition-all duration-300 rounded-xl scale-98 active:scale-95 transition-transform" href="#">
+<span class="material-symbols-outlined">help</span>
+                    Support
+                </a>
+</div>
+</div>
+</nav>
+<!-- Main Content Area -->
+<div class="ml-72 flex-1 flex flex-col w-full max-w-[1600px] mx-auto min-h-screen">
+<!-- TopNavBar -->
+<header class="bg-surface/80 dark:bg-inverse-surface/80 backdrop-blur-md h-20 w-full sticky top-0 z-40">
+<div class="flex justify-between items-center px-12 h-full max-w-full">
+<!-- Search Bar -->
+<div class="flex items-center bg-surface-container-low rounded-xl px-4 py-2 w-96 focus-within:ring-2 focus-within:ring-primary/20 transition-all">
+<span class="material-symbols-outlined text-on-surface-variant mr-2">search</span>
+<input class="bg-transparent border-none focus:ring-0 w-full text-body-sm font-body-sm text-on-surface outline-none placeholder:text-on-surface-variant/50" placeholder="Search routes, drivers, or trucks..." type="text">
+</div>
+<!-- Trailing Actions -->
+<div class="flex items-center gap-6">
+<button class="bg-primary/10 text-primary px-4 py-2 rounded-lg text-label-md font-label-md hover:bg-primary/20 transition-colors">
+                        Quick Actions
+                    </button>
+<div class="flex items-center gap-4">
+<button class="text-on-surface-variant hover:text-primary transition-colors opacity-90 hover:opacity-100">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="text-on-surface-variant hover:text-primary transition-colors opacity-90 hover:opacity-100">
+<span class="material-symbols-outlined">help_outline</span>
+</button>
+<img alt="Administrator Profile" class="w-10 h-10 rounded-full object-cover ml-2 cursor-pointer border border-outline-variant/20" data-alt="A professional headshot of a logistics administrator in a modern office environment. Soft natural lighting, shallow depth of field, wearing a crisp business casual outfit. Calm, confident expression. High-end corporate portrait style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDSK27_JrpjNutlJqWdOIkmKVcsPK583dJ4rZzoWMRMcLAPtIu0XQf436ilSIqhSNrLhiP-WBc401yVAqgsZRO9JkSZ9z_eikGwRltLmrPg44jb9u3ieeu7qqr0a9SIsz_l0BKo7E3z_kuzOBhyAmIQalQdu8OrciMtLrvN5e5YgBorMj7Seu59mzHvcku3naVYBVI6GjcHyhdCo1KRsfVreLykjraxNqTHbf-ciX3eBpUNjntNfdo9">
+</div>
+</div>
+</div>
+</header>
+<!-- Dashboard Canvas -->
+<main class="p-8 flex-1 flex flex-col gap-card-gap">
+<!-- Page Header -->
+<div class="mb-4">
+<h2 class="text-headline-lg font-headline-lg text-on-surface">Overview</h2>
+<p class="text-body-md font-body-md text-on-surface-variant mt-1">Real-time performance and financial metrics for your fleet.</p>
+</div>
+<!-- KPI Cards Row -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+<!-- Revenue -->
+<div class="bg-surface-container-lowest rounded-[20px] p-6 ambient-shadow relative overflow-hidden group hover:shadow-lg transition-shadow duration-300"><div class="absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-20 transition-opacity"><span class="material-symbols-outlined text-6xl text-primary">account_balance_wallet</span></div><p class="text-label-md font-label-md text-on-surface-variant mb-2 uppercase tracking-wider">Total Gross</p><h3 class="text-display-lg font-display-lg text-on-surface mb-2">₱123,212.83</h3><div class="flex items-center gap-2"><span class="bg-[#10B981]/15 text-[#10B981] px-2 py-1 rounded-full text-label-md font-label-md flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">trending_up</span> +12%</span><span class="text-body-sm font-body-sm text-on-surface-variant">vs last month</span></div></div>
+<!-- Gross Profit -->
+<div class="bg-surface-container-lowest rounded-[20px] p-6 ambient-shadow relative overflow-hidden group hover:shadow-lg transition-shadow duration-300"><div class="absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-20 transition-opacity"><span class="material-symbols-outlined text-6xl text-[#10B981]">stacked_line_chart</span></div><p class="text-label-md font-label-md text-on-surface-variant mb-2 uppercase tracking-wider">Total Profit</p><h3 class="text-display-lg font-display-lg text-on-surface mb-2">₱92,409.62</h3><div class="flex items-center gap-2"><span class="text-body-sm font-body-sm text-on-surface-variant">avg ₱92,409.62 / trip</span></div></div>
+<!-- Total Expenses -->
+<div class="bg-surface-container-lowest rounded-[20px] p-6 ambient-shadow relative overflow-hidden group hover:shadow-lg transition-shadow duration-300"><div class="absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-20 transition-opacity"><span class="material-symbols-outlined text-6xl text-error">receipt_long</span></div><p class="text-label-md font-label-md text-on-surface-variant mb-2 uppercase tracking-wider">Total Expense</p><h3 class="text-display-lg font-display-lg text-on-surface mb-2">₱0</h3><div class="flex items-center gap-2"><span class="text-body-sm font-body-sm text-on-surface-variant">No expenses recorded</span></div></div>
+<!-- Active Fleet -->
+<div class="bg-surface-container-lowest rounded-[20px] p-6 ambient-shadow relative overflow-hidden group hover:shadow-lg transition-shadow duration-300"><div class="absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-20 transition-opacity"><span class="material-symbols-outlined text-6xl text-primary">local_shipping</span></div><p class="text-label-md font-label-md text-on-surface-variant mb-2 uppercase tracking-wider">Total Trips</p><h3 class="text-display-lg font-display-lg text-on-surface mb-2">1</h3><div class="flex items-center gap-2"><span class="text-body-sm font-body-sm text-on-surface-variant">0 cancelled</span></div></div>
+</div>
+<!-- Charts Section -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+<!-- Line Chart: Gross Profit vs Expenses -->
+<div class="bg-surface-container-lowest rounded-[20px] p-6 ambient-shadow lg:col-span-2 flex flex-col">
+<div class="flex justify-between items-center mb-6">
+<div><h3 class="text-headline-md font-headline-md text-on-surface">Income vs Expense</h3><p class="text-body-sm font-body-sm text-on-surface-variant">This Month</p></div>
+<div class="flex gap-4 text-label-md font-label-md">
+<div class="flex items-center gap-2">
+<div class="w-3 h-3 rounded-full bg-primary"></div>
+<span class="text-on-surface-variant">Profit</span>
+</div>
+<div class="flex items-center gap-2">
+<div class="w-3 h-3 rounded-full bg-[#10B981]/50"></div>
+<span class="text-on-surface-variant">Expenses</span>
+</div>
+</div>
+</div>
+<!-- Chart Placeholder (Stylized CSS illustration for demonstration) -->
+<div class="flex-1 relative min-h-[300px] w-full mt-4 border-l border-b border-outline-variant/30">
+<!-- Y-Axis Labels -->
+<div class="absolute -left-10 top-0 bottom-0 flex flex-col justify-between text-label-md text-on-surface-variant/60 py-2"><span class="">₱140k</span><span class="">₱105k</span><span class="">₱70k</span><span class="">₱35k</span><span class="">₱0</span></div>
+<!-- Grid Lines -->
+<div class="absolute inset-0 flex flex-col justify-between pointer-events-none">
+<div class="w-full h-px border-t border-dashed border-outline-variant/20"></div>
+<div class="w-full h-px border-t border-dashed border-outline-variant/20"></div>
+<div class="w-full h-px border-t border-dashed border-outline-variant/20"></div>
+<div class="w-full h-px"></div>
+</div>
+<!-- SVG Chart Lines -->
+<svg class="absolute inset-0 h-full w-full" preserveAspectRatio="none" viewBox="0 0 100 100">
+<!-- Expenses Line (Soft Green) -->
+<path d="M0,80 Q10,75 20,70 T40,65 T60,50 T80,55 T100,45" fill="none" stroke="#10B981" stroke-linecap="round" stroke-opacity="0.5" stroke-width="2"></path>
+<!-- Profit Line (Soft Blue) -->
+<path d="M0,90 Q10,85 20,60 T40,40 T60,30 T80,20 T100,10" fill="none" stroke="#1a58b7" stroke-linecap="round" stroke-width="3"></path>
+<!-- Points -->
+<circle cx="20" cy="60" fill="#1a58b7" r="1.5"></circle>
+<circle cx="40" cy="40" fill="#1a58b7" r="1.5"></circle>
+<circle cx="60" cy="30" fill="#1a58b7" r="1.5"></circle>
+<circle cx="80" cy="20" fill="#1a58b7" r="1.5"></circle>
+</svg>
+<!-- X-Axis Labels -->
+<div class="absolute -bottom-8 left-0 right-0 flex justify-between text-label-md text-on-surface-variant/60 px-4"><span class="">Wk of Jul 26</span><span class="">Wk of Aug 2</span><span class="">Wk of Aug 9</span><span class="">Wk of Aug 16</span><span class="">Wk of Aug 23</span><span class="">Wk of Aug 30</span></div>
+</div>
+</div>
+<!-- Donut Chart: Expense Breakdown -->
+<div class="bg-surface-container-lowest rounded-[20px] p-6 ambient-shadow flex flex-col">
+<h3 class="text-headline-md font-headline-md text-on-surface mb-2">Expense Breakdown</h3>
+<p class="text-body-sm font-body-sm text-on-surface-variant mb-6">Current Month Allocation</p>
+<div class="flex-1 flex flex-col items-center justify-center relative">
+<!-- Stylized CSS Donut -->
+<div class="w-48 h-48 rounded-full border-[24px] border-surface-container-highest relative flex items-center justify-center" style="background: conic-gradient(#aec6ff 0% 45%, #ffb960 45% 70%, #d8e2ff 70% 85%, #ffddb8 85% 100%);">
+<div class="absolute inset-0 m-[-24px] rounded-full border-[24px] border-surface-container-lowest pointer-events-none"></div> <!-- Inner cut out -->
+<div class="text-center z-10 bg-surface-container-lowest w-32 h-32 rounded-full flex flex-col items-center justify-center absolute"><span class="text-headline-md font-headline-md text-on-surface">₱123.2k</span><span class="text-label-md text-on-surface-variant">Total Gross</span></div>
+</div>
+</div>
+<!-- Legend -->
+<div class="mt-6 grid grid-cols-2 gap-4 text-label-md font-label-md">
+<div class="flex items-center gap-2">
+<div class="w-3 h-3 rounded-full bg-[#aec6ff]"></div>
+<span class="text-on-surface-variant">Fuel (45%)</span>
+</div>
+<div class="flex items-center gap-2">
+<div class="w-3 h-3 rounded-full bg-[#ffb960]"></div>
+<span class="text-on-surface-variant">Maint. (25%)</span>
+</div>
+<div class="flex items-center gap-2">
+<div class="w-3 h-3 rounded-full bg-[#d8e2ff]"></div>
+<span class="text-on-surface-variant">Driver (15%)</span>
+</div>
+<div class="flex items-center gap-2">
+<div class="w-3 h-3 rounded-full bg-[#ffddb8]"></div>
+<span class="text-on-surface-variant">Tolls (15%)</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Recent Trips Table -->
+<div class="bg-surface-container-lowest rounded-[20px] p-6 ambient-shadow mt-2">
+<div class="flex justify-between items-center mb-6">
+<h3 class="text-headline-md font-headline-md text-on-surface">Recent Trips</h3>
+<button class="text-primary hover:bg-primary/5 px-3 py-1.5 rounded-lg text-label-md font-label-md transition-colors">
+                        View All
+                    </button>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="text-label-md font-label-md text-on-surface-variant/70 border-b border-outline-variant/30">
+<th class="pb-4 font-normal">Trip ID</th>
+<th class="pb-4 font-normal">Driver</th>
+<th class="pb-4 font-normal">Route</th>
+<th class="pb-4 font-normal">Status</th>
+<th class="pb-4 font-normal text-right">Revenue</th>
+</tr>
+</thead>
+<tbody class="text-body-md font-body-md text-on-surface">
+<tr class="hover:bg-surface-container/50 transition-colors border-b border-outline-variant/10 group">
+<td class="py-4 font-medium text-primary">#TRP-8092</td>
+<td class="py-4 flex items-center gap-3">
+<img alt="Driver" class="w-8 h-8 rounded-full object-cover" data-alt="A small circular portrait of a professional truck driver wearing a subtle uniform shirt. Soft lighting, neutral background, calm expression. High quality." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAqrrn4nXb1eZ0jlXQmI_V2tQ0GacAEx9z9WUv8vl7JcWs7ILNCsqdeCaoiGo7IwDZvC2UFhBUZ-rOsUlAfCkSpA9hgsKOseDT1vVY7w7ytQz_nEyWGXDhPzdvWQH39ejTNcSWCzi9DM3g3pwEHeZBM61QlQA_ulW3Fd2hf7UMQPcIYZjRATndsoSBX9TV0JgnVehEa0Np9ggF5hkwJoiqYrB6dfQVugvxvyD75pyffaCIxSfDjZmfM">
+                                    Sarah Jenkins
+                                </td>
+<td class="py-4 text-on-surface-variant">Chicago, IL → Dallas, TX</td>
+<td class="py-4">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-label-md bg-[#10B981]/15 text-[#10B981]">
+                                        Completed
+                                    </span>
+</td>
+<td class="py-4 text-right font-medium">₱4,250</td>
+</tr>
+<tr class="hover:bg-surface-container/50 transition-colors border-b border-outline-variant/10 group">
+<td class="py-4 font-medium text-primary">#TRP-8093</td>
+<td class="py-4 flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-primary/20 text-primary flex items-center justify-center text-label-md font-bold">MR</div>
+                                    Michael Ross
+                                </td>
+<td class="py-4 text-on-surface-variant">Atlanta, GA → Miami, FL</td>
+<td class="py-4">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-label-md bg-[#3b82f6]/15 text-[#3b82f6]">
+                                        In Transit
+                                    </span>
+</td>
+<td class="py-4 text-right font-medium">₱3,100</td>
+</tr>
+<tr class="hover:bg-surface-container/50 transition-colors border-b border-outline-variant/10 group">
+<td class="py-4 font-medium text-primary">#TRP-8094</td>
+<td class="py-4 flex items-center gap-3">
+<img alt="Driver" class="w-8 h-8 rounded-full object-cover" data-alt="A small circular portrait of a seasoned professional truck driver. Soft lighting, neutral background, confident expression. High quality." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBvhGJMDZBlEGECOcUciq7E9lE40Onh2z82S6ZwFRU_XMD0qgzUHfQogIo0Gl_HXobwW89yoaCnzEV64yFiVODC8l1RUYRsYGcxjYq5LUl31SlY7-tuqh9vb25vzNMz9aXJq7eULNRfcV6_KtRiJ7-prl71KnnXbpMQZ9z8NWSJo12x---kd85ZsT8LqZiUj4CO0G9BNxXPfRlSD4xxKnoUO-ioLBuf1lwCR5_O2JqMz8VuDOw8ZucD">
+                                    David Chen
+                                </td>
+<td class="py-4 text-on-surface-variant">Denver, CO → Seattle, WA</td>
+<td class="py-4">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-label-md bg-error/15 text-error">
+                                        Delayed
+                                    </span>
+</td>
+<td class="py-4 text-right font-medium">₱5,800</td>
+</tr>
+<tr class="hover:bg-surface-container/50 transition-colors group">
+<td class="py-4 font-medium text-primary">#TRP-8095</td>
+<td class="py-4 flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-tertiary/20 text-tertiary flex items-center justify-center text-label-md font-bold">EW</div>
+                                    Elena Woods
+                                </td>
+<td class="py-4 text-on-surface-variant">Phoenix, AZ → Los Angeles, CA</td>
+<td class="py-4">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-label-md bg-[#3b82f6]/15 text-[#3b82f6]">
+                                        In Transit
+                                    </span>
+</td>
+<td class="py-4 text-right font-medium">₱2,450</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</main>
+</div>
+
+
+</body></html>

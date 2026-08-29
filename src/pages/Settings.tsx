@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Plus, RotateCcw, Shield, Trash2 } from "lucide-react";
 import { useStore, settingsActions, ruleActions, userActions, tripActions, resetData } from "../lib/store";
 import { useAuth } from "../lib/auth";
-import { Badge, Button, Card, Field, Input, Select, cx } from "../components/ui";
+import { Badge, Button, Card, Field, Input, PageHeader, Select, cx } from "../components/ui";
 import { useToast } from "../lib/toast";
 import type { CommissionBasis, Role, SplitMode, User } from "../lib/types";
 
@@ -24,8 +24,15 @@ export function Settings() {
 
   return (
     <div className="space-y-6">
+      <PageHeader title="Settings" subtitle="Manage company defaults, fleet rules, commissions, and access" />
+      <nav aria-label="Settings sections" className="sticky top-0 z-10 -mx-1 flex gap-1 overflow-x-auto rounded-2xl bg-surface/95 p-1 backdrop-blur-sm">
+        {[['company-settings', 'Company'], ['fleet-settings', 'Fleet'], ['commission-settings', 'Commissions'], ['access-settings', 'Access'], ['data-settings', 'Data']].map(([id, label]) => (
+          <a key={id} href={`#${id}`} className="min-h-11 shrink-0 rounded-xl px-3 py-2 text-xs font-semibold text-muted transition-colors hover:bg-card hover:text-brand focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand">{label}</a>
+        ))}
+      </nav>
       <div className="grid gap-6 lg:grid-cols-2">
-        <Card title="Company Profile" subtitle="Used in exported reports and records">
+        <div id="company-settings" className="scroll-mt-20">
+          <Card title="Company Profile" subtitle="Company-wide · used in exported reports and records">
           <div className="space-y-4">
             <Field label="Company Name">
               <Input value={company.name} onChange={(e) => setCompany({ ...company, name: e.target.value })} />
@@ -33,7 +40,7 @@ export function Settings() {
             <Field label="Address">
               <Input value={company.address} onChange={(e) => setCompany({ ...company, address: e.target.value })} />
             </Field>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <Field label="Phone">
                 <Input value={company.phone} onChange={(e) => setCompany({ ...company, phone: e.target.value })} />
               </Field>
@@ -47,8 +54,10 @@ export function Settings() {
             </div>
           </div>
         </Card>
+        </div>
 
-        <Card title="Vehicle Types" subtitle="Configurable list used across the app">
+        <div id="fleet-settings" className="scroll-mt-20">
+          <Card title="Vehicle Types" subtitle="Company-wide · available across trips, reports, and payroll">
           <div className="mb-3 flex gap-2">
             <Input value={newType} onChange={(e) => setNewType(e.target.value)} placeholder="e.g. 10-Wheeler Wingvan" />
             <Button
@@ -86,17 +95,25 @@ export function Settings() {
           <p className="mt-3 text-[11px] leading-relaxed text-muted">Types already assigned to vehicles cannot be removed.</p>
         </Card>
       </div>
+      </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div id="commission-settings" className="scroll-mt-20 grid gap-6 lg:grid-cols-2">
         <CommissionRuleEditor role="driver" />
         <CommissionRuleEditor role="helper" />
       </div>
 
-      <UserManagement />
+      <div id="access-settings" className="scroll-mt-20">
+        <UserManagement />
+      </div>
 
-      <Card title="Danger Zone">
+      <div id="data-settings" className="scroll-mt-20">
+      <Card title="Data Management" subtitle="Owner-only controls for company records">
+        <div className="mb-4 rounded-xl bg-red-50 px-4 py-3">
+          <p className="text-sm font-semibold text-red-700">These actions affect company records</p>
+          <p className="mt-1 text-xs leading-relaxed text-red-600">Review the consequences before continuing. Destructive changes cannot be undone.</p>
+        </div>
         <div className="space-y-4">
-          <div className="flex items-center justify-between gap-4">
+          <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-sm font-medium text-ink">Delete all trips</p>
               <p className="text-xs leading-relaxed text-muted">Remove all trip records. Employees, vehicles, and settings are preserved.</p>
@@ -106,7 +123,7 @@ export function Settings() {
             </Button>
           </div>
           <div className="border-t border-edge/60" />
-          <div className="flex items-center justify-between gap-4">
+          <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-sm font-medium text-ink">Reset demo data</p>
               <p className="text-xs leading-relaxed text-muted">Restore the seeded dataset and discard all changes.</p>
@@ -117,11 +134,12 @@ export function Settings() {
           </div>
         </div>
       </Card>
+      </div>
 
       {confirmDeleteAll && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 backdrop-blur-sm p-4">
-          <div className="w-full max-w-sm rounded-xl bg-card p-5 shadow-dropdown">
-            <h3 className="text-base font-semibold text-ink">Delete all trips?</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 backdrop-blur-sm p-4">
+          <div role="dialog" aria-modal="true" aria-labelledby="settings-confirm-title" className="w-full max-w-sm rounded-xl bg-card p-5 shadow-dropdown">
+            <h3 id="settings-confirm-title" className="text-base font-semibold text-ink">Delete all trips?</h3>
             <p className="mt-1 text-sm leading-relaxed text-muted">This will permanently remove all trip records. Employees, vehicles, and settings will be kept.</p>
             <div className="mt-5 flex justify-end gap-2">
               <Button variant="secondary" onClick={() => setConfirmDeleteAll(false)}>Cancel</Button>
@@ -142,9 +160,9 @@ export function Settings() {
         </div>
       )}
       {confirmReset && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 backdrop-blur-sm p-4">
-          <div className="w-full max-w-sm rounded-xl bg-card p-5 shadow-dropdown">
-            <h3 className="text-base font-semibold text-ink">Reset all data?</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 backdrop-blur-sm p-4">
+          <div role="dialog" aria-modal="true" aria-labelledby="settings-reset-title" className="w-full max-w-sm rounded-xl bg-card p-5 shadow-dropdown">
+            <h3 id="settings-reset-title" className="text-base font-semibold text-ink">Reset all data?</h3>
             <p className="mt-1 text-sm leading-relaxed text-muted">This will erase all trips, employees, vehicles and settings you've added.</p>
             <div className="mt-5 flex justify-end gap-2">
               <Button variant="secondary" onClick={() => setConfirmReset(false)}>Cancel</Button>
@@ -221,7 +239,7 @@ function CommissionRuleEditor({ role }: { role: "driver" | "helper" }) {
       actions={<Button size="sm" onClick={save}>{saved ? "Saved ✓" : "Save rule"}</Button>}
     >
       <div className="space-y-4">
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <Field label="Basis">
             <Select value={basis} onChange={(e) => setBasis(e.target.value as CommissionBasis)}>
               <option value="profit">% of Profit</option>
@@ -248,43 +266,31 @@ function CommissionRuleEditor({ role }: { role: "driver" | "helper" }) {
           </Field>
         )}
 
-        <div>
-          <p className="mb-2 text-xs font-medium text-ink-soft">Per Vehicle Type Overrides</p>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-            {data.vehicleTypes.map((t) => (
-              <Field key={t} label={t}>
-                <Input
-                  type="number"
-                  min="0"
-                  step="0.1"
-                  placeholder={`default ${rule.default_percentage}`}
-                  value={typeOverride[t] ?? ""}
-                  onChange={(e) => setTypeOverride({ ...typeOverride, [t]: e.target.value })}
-                />
-              </Field>
-            ))}
-          </div>
-        </div>
-
-        {role === "driver" && (
-          <div>
-            <p className="mb-2 text-xs font-medium text-ink-soft">Per Employee Overrides</p>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-              {drivers.map((d) => (
-                <Field key={d.id} label={d.name}>
-                  <Input
-                    type="number"
-                    min="0"
-                    step="0.1"
-                    placeholder={`default ${rule.default_percentage}`}
-                    value={empOverride[d.id] ?? ""}
-                    onChange={(e) => setEmpOverride({ ...empOverride, [d.id]: e.target.value })}
-                  />
+        <details className="group rounded-xl bg-card-soft p-3">
+          <summary className="cursor-pointer list-none text-sm font-semibold text-ink-soft focus-visible:outline-2 focus-visible:outline-brand">Advanced overrides <span className="ml-1 text-xs font-normal text-muted">({data.vehicleTypes.length} vehicle types)</span></summary>
+          <div className="mt-4">
+            <p className="mb-2 text-xs font-medium text-ink-soft">Per Vehicle Type Overrides</p>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {data.vehicleTypes.map((t) => (
+                <Field key={t} label={t}>
+                  <Input type="number" min="0" step="0.1" placeholder={`default ${rule.default_percentage}`} value={typeOverride[t] ?? ""} onChange={(e) => setTypeOverride({ ...typeOverride, [t]: e.target.value })} />
                 </Field>
               ))}
             </div>
           </div>
-        )}
+          {role === "driver" && (
+            <div className="mt-4">
+              <p className="mb-2 text-xs font-medium text-ink-soft">Per Employee Overrides</p>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {drivers.map((d) => (
+                  <Field key={d.id} label={d.name}>
+                    <Input type="number" min="0" step="0.1" placeholder={`default ${rule.default_percentage}`} value={empOverride[d.id] ?? ""} onChange={(e) => setEmpOverride({ ...empOverride, [d.id]: e.target.value })} />
+                  </Field>
+                ))}
+              </div>
+            </div>
+          )}
+        </details>
       </div>
     </Card>
   );
@@ -348,8 +354,8 @@ function UserManagement() {
       }
     >
       {showForm && (
-        <form onSubmit={submit} className="mb-4 grid grid-cols-1 gap-3 rounded-lg border border-edge bg-card-soft p-4 sm:grid-cols-2 lg:grid-cols-5">
-          {error && <div className="col-span-full rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-500 dark:text-red-400">{error}</div>}
+        <form onSubmit={submit} className="mb-4 grid grid-cols-1 gap-3 rounded-xl bg-card-soft p-4 sm:grid-cols-2 lg:grid-cols-5">
+          {error && <div role="alert" className="col-span-full rounded-xl bg-red-50 px-3 py-2 text-sm font-medium text-red-600">{error}</div>}
           <Field label="Name">
             <Input value={name} onChange={(e) => setName(e.target.value)} />
           </Field>
@@ -376,7 +382,7 @@ function UserManagement() {
 
       <div className="divide-y divide-edge/70">
         {data.users.map((u) => (
-          <div key={u.id} className="flex items-center gap-3 py-2.5">
+          <div key={u.id} className="flex flex-wrap items-center gap-3 py-3">
             <div className="flex h-9 w-9 items-center justify-center rounded-full bg-card-soft text-xs font-bold text-ink-soft">
               {u.name.slice(0, 1)}
             </div>
@@ -386,12 +392,15 @@ function UserManagement() {
               </p>
               <p className="truncate text-xs text-muted">{u.email}</p>
             </div>
-            <Badge tone={u.role === "owner" ? "violet" : u.role === "accountant" ? "amber" : "blue"}>{roleLabel[u.role]}</Badge>
-            <Badge tone={u.status === "active" ? "green" : "red"} dot>{u.status}</Badge>
+            <div className="flex flex-wrap items-center gap-2 sm:ml-auto">
+              <Badge tone={u.role === "owner" ? "violet" : u.role === "accountant" ? "amber" : "blue"}>{roleLabel[u.role]}</Badge>
+              <Badge tone={u.status === "active" ? "green" : "red"} dot>{u.status}</Badge>
+            </div>
             <button
               onClick={() => toggleUser(u)}
+              aria-label={`${u.status === "active" ? "Deactivate" : "Activate"} ${u.name}`}
               className={cx(
-                "flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-medium ring-1 transition-all duration-150",
+                "ml-auto inline-flex min-h-11 items-center gap-1 rounded-xl px-3 text-xs font-medium ring-1 transition-all duration-150 sm:ml-0",
                 u.status === "active"
                   ? "text-ink-soft ring-edge hover:bg-card-soft"
                   : "text-emerald-500 dark:text-emerald-400 ring-emerald-500/30 dark:ring-emerald-400/30 hover:bg-emerald-500/10"

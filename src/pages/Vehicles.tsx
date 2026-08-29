@@ -20,7 +20,7 @@ export function Vehicles() {
     return { trips: trips.length, gross };
   };
 
-  if (loading) return <div className="space-y-4"><Skeleton className="h-10 w-48 rounded-lg" /><div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">{Array.from({length:6}).map((_,i)=><SkeletonCard key={i} />)}</div></div>;
+  if (loading) return <div className="space-y-4"><Skeleton className="h-10 w-48" /><div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">{Array.from({length:6}).map((_,i)=><SkeletonCard key={i} />)}</div></div>;
 
   return (
     <div>
@@ -38,31 +38,31 @@ export function Vehicles() {
         {data.vehicles.map((v) => {
           const stats = statsFor(v.id);
           return (
-            <div key={v.id} className="rounded-xl border border-edge bg-card p-5 shadow-card transition-all duration-200 hover:border-edge-strong hover:shadow-card-hover">
+            <div key={v.id} className="rounded-[20px] bg-card p-5 shadow-card transition-shadow duration-300 hover:shadow-card-hover">
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-card-soft text-muted">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-card-soft text-muted">
                     <Car className="h-5 w-5" />
                   </div>
                   <div>
-                    <p className="text-sm font-bold text-ink">{v.plate_number}</p>
-                    <p className="text-xs text-muted">{v.type}</p>
+                    <p className="text-sm font-semibold text-ink">{v.plate_number}</p>
+                    <p className="text-xs font-medium text-muted">{v.type}</p>
                     {v.driver_id && (
-                      <p className="text-xs text-ink-soft mt-0.5">Driver: {data.employees.find((e) => e.id === v.driver_id)?.name ?? "—"}</p>
+                      <p className="mt-0.5 text-xs font-medium text-ink-soft">Driver: {data.employees.find((e) => e.id === v.driver_id)?.name ?? "—"}</p>
                     )}
                   </div>
                 </div>
                 <Badge tone={v.status === "active" ? "green" : "red"} dot>{v.status}</Badge>
               </div>
-              <div className="mt-3 flex items-center justify-between border-t border-edge/70 pt-3 text-xs">
-                <span className="text-muted">Capacity: <strong className="text-ink-soft tnum">{v.capacity_kg.toLocaleString()} kg</strong></span>
-                <span className="text-muted">{stats.trips} trips · <strong className="text-ink-soft tnum">{peso0(stats.gross)}</strong></span>
+              <div className="mt-4 flex items-center justify-between border-t border-edge pt-4 text-xs">
+                <span className="font-medium text-muted">Capacity: <strong className="tnum text-[#444749]">{v.capacity_kg.toLocaleString()} kg</strong></span>
+                <span className="font-medium text-muted">{stats.trips} trips · <strong className="tnum text-[#444749]">{peso0(stats.gross)}</strong></span>
               </div>
-              <div className="mt-3 flex justify-end gap-1 border-t border-edge/70 pt-3">
-                <button onClick={() => { setEditing(v); setFormOpen(true); }} className="rounded-lg p-1.5 text-muted transition-all duration-150 hover:bg-brand-soft hover:text-amber-500 dark:hover:text-amber-400 active:scale-95">
+              <div className="mt-4 flex justify-end gap-1 border-t border-edge pt-4">
+                <button aria-label={`Edit vehicle ${v.plate_number}`} onClick={() => { setEditing(v); setFormOpen(true); }} className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl p-1.5 text-muted transition-colors hover:bg-brand-soft hover:text-brand focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand">
                   <Pencil className="h-4 w-4" />
                 </button>
-                <button onClick={() => setConfirmDelete(v)} className="rounded-lg p-1.5 text-muted transition-all duration-150 hover:bg-red-500/10 hover:text-red-500 dark:hover:text-red-400 active:scale-95">
+                <button aria-label={`Delete vehicle ${v.plate_number}`} onClick={() => setConfirmDelete(v)} className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl p-1.5 text-muted transition-colors hover:bg-red-50 hover:text-red-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand">
                   <Trash2 className="h-4 w-4" />
                 </button>
               </div>
@@ -71,16 +71,16 @@ export function Vehicles() {
         })}
       </div>
       {data.vehicles.length === 0 && (
-        <div className="rounded-xl border border-edge bg-card"><EmptyState icon={<Car className="h-8 w-8" />} title="No vehicles" subtitle="Add your fleet vehicles to start logging trips." /></div>
+        <div className="rounded-[20px] bg-card shadow-card"><EmptyState icon={<Car className="h-8 w-8" />} title="No vehicles" subtitle="Add your fleet vehicles to start logging trips." /></div>
       )}
 
       <VehicleForm open={formOpen} onClose={() => setFormOpen(false)} initial={editing} />
 
       {confirmDelete && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 backdrop-blur-sm p-4">
-          <div className="w-full max-w-sm rounded-xl bg-card p-5 shadow-dropdown">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-sm rounded-[20px] bg-card p-5 shadow-dropdown">
             <h3 className="text-base font-semibold text-ink">Delete vehicle?</h3>
-            <p className="mt-1 text-sm leading-relaxed text-muted">Remove {confirmDelete.plate_number}?</p>
+            <p className="mt-1 text-sm font-medium leading-relaxed text-muted">Remove {confirmDelete.plate_number}?</p>
             <div className="mt-5 flex justify-end gap-2">
               <Button variant="secondary" onClick={() => setConfirmDelete(undefined)}>Cancel</Button>
               <Button variant="danger" onClick={() => { vehicleActions.remove(confirmDelete.id); setConfirmDelete(undefined); toast("Vehicle deleted", "success"); }}>Delete</Button>
@@ -141,7 +141,7 @@ function VehicleForm({
       }
     >
       <form id="veh-form" onSubmit={submit} className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        {error && <div className="col-span-full rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-500 dark:text-red-400">{error}</div>}
+        {error && <div className="col-span-full rounded-xl bg-red-50 px-3 py-2 text-sm font-medium text-red-600">{error}</div>}
         <Field label="Plate Number" required>
           <Input value={plate} onChange={(e) => setPlate(e.target.value)} placeholder="ABC 1234" />
         </Field>

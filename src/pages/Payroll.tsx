@@ -157,15 +157,16 @@ export function Payroll() {
         }
       />
 
-      <div className="mb-4 flex flex-wrap items-center gap-3">
+      <div className="mb-4 flex flex-col items-stretch gap-3 sm:flex-row sm:flex-wrap sm:items-center">
         {/* Period mode */}
         <div className="flex rounded-lg border border-edge bg-card p-0.5">
           {(["weekly", "monthly", "custom"] as const).map((mode) => (
             <button
               key={mode}
               onClick={() => setPeriodMode(mode)}
+              aria-pressed={periodMode === mode}
               className={cx(
-                "rounded-md px-3 py-1.5 text-xs font-medium transition-all duration-150 capitalize",
+               "min-h-11 rounded-md px-3 py-1.5 text-xs font-medium transition-all duration-150 capitalize focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand",
                 periodMode === mode ? "bg-brand text-on-brand shadow-glow" : "text-ink-soft hover:text-ink"
               )}
             >
@@ -215,7 +216,7 @@ export function Payroll() {
 
       <div className="overflow-hidden rounded-xl border border-edge bg-card shadow-card">
         <div className="overflow-x-auto">
-          <table className="w-full border-collapse">
+           <table className="w-full border-collapse" aria-label="Payroll summary">
             <thead className="bg-card-soft">
               <tr>
                 <Th>Employee</Th>

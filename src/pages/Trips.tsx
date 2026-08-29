@@ -143,8 +143,10 @@ export function Trips() {
 
       <div className="mb-4 flex flex-col gap-3">
         <div className="relative">
+          <label htmlFor="trips-search" className="sr-only">Search trips</label>
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
           <input
+            id="trips-search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search driver, helper, plate, Transportify ID, phone, address, items…"
@@ -203,9 +205,10 @@ export function Trips() {
         <span>Profit total: <strong className={cx("tnum", profitTotal >= 0 ? "text-emerald-500 dark:text-emerald-400" : "text-red-500 dark:text-red-400")}>{peso0(profitTotal)}</strong></span>
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-edge bg-card shadow-card">
+      <div className="overflow-hidden rounded-[20px] bg-card shadow-card">
+        <p className="px-4 pt-3 text-xs font-medium text-muted sm:hidden">Swipe horizontally to view all trip details.</p>
         <div className="overflow-x-auto">
-          <table className="w-full border-collapse">
+          <table className="w-full border-collapse" aria-label="Trips directory">
             <thead className="bg-card-soft">
               <tr>
                 <Th>Date & Time</Th>
@@ -299,9 +302,9 @@ export function Trips() {
       <TripForm key={editing?.id ?? "new"} open={formOpen} onClose={() => setFormOpen(false)} initial={editing} />
 
       {confirmDelete && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 backdrop-blur-sm p-4">
-          <div className="w-full max-w-sm rounded-xl bg-card p-5 shadow-dropdown">
-            <h3 className="text-base font-semibold text-ink">Delete trip?</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 backdrop-blur-sm p-4">
+          <div role="dialog" aria-modal="true" aria-labelledby="delete-trip-title" className="w-full max-w-sm rounded-xl bg-card p-5 shadow-dropdown">
+            <h3 id="delete-trip-title" className="text-base font-semibold text-ink">Delete trip?</h3>
             <p className="mt-1 text-sm leading-relaxed text-muted">
               Delete {confirmDelete.transportify_id} by{" "}
               {data.employees.find((e) => e.id === confirmDelete.driver_id)?.name}? This affects payroll records.

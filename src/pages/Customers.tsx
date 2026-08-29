@@ -44,7 +44,7 @@ export function Customers() {
     return { count: trips.length, gross, last: trips[0]?.date_time };
   };
 
-  if (loading) return <div className="space-y-4"><Skeleton className="h-10 w-48 rounded-lg" /><Skeleton className="h-8 w-80 rounded-lg" /><div className="overflow-hidden rounded-xl border border-edge bg-card"><table className="w-full"><thead><tr>{Array.from({length:5}).map((_,i)=><th key={i} className="px-3 py-2.5"><Skeleton className="h-3 w-16" /></th>)}</tr></thead><tbody>{Array.from({length:5}).map((_,i)=><SkeletonTableRow key={i} cols={5} />)}</tbody></table></div></div>;
+  if (loading) return <div className="space-y-4"><Skeleton className="h-10 w-48" /><Skeleton className="h-8 w-80" /><div className="overflow-hidden rounded-[20px] bg-card shadow-card"><table className="w-full"><thead><tr>{Array.from({length:5}).map((_,i)=><th key={i} className="px-3 py-2.5"><Skeleton className="h-3 w-16" /></th>)}</tr></thead><tbody>{Array.from({length:5}).map((_,i)=><SkeletonTableRow key={i} cols={5} />)}</tbody></table></div></div>;
 
   return (
     <div>
@@ -54,18 +54,20 @@ export function Customers() {
       />
 
       <div className="relative mb-4 max-w-md">
+        <label htmlFor="customers-search" className="sr-only">Search customers</label>
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
         <input
+          id="customers-search"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search by phone or name…"
-          className="w-full rounded-lg border border-edge bg-card py-2.5 pl-10 pr-3 text-sm shadow-card placeholder:text-muted/60 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand-ring transition-all duration-150"
+          className="w-full rounded-xl border border-edge bg-card py-2.5 pl-10 pr-3 text-sm font-medium text-ink shadow-card placeholder:text-muted/60 transition-all duration-200 focus:border-brand focus:outline-none focus:ring-4 focus:ring-brand-ring"
         />
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-edge bg-card shadow-card">
+      <div className="overflow-hidden rounded-[20px] bg-card shadow-card">
         <div className="overflow-x-auto">
-          <table className="w-full border-collapse">
+          <table className="w-full border-collapse" aria-label="Customer directory">
             <thead className="bg-card-soft">
               <tr>
                 <Th>Customer</Th>
@@ -79,15 +81,15 @@ export function Customers() {
               {customers.map((c) => {
                 const s = statsFor(c.phone_number);
                 return (
-                  <tr key={c.id} className="hover:bg-card-soft transition-colors duration-100">
+                  <tr key={c.id} className="transition-colors duration-200 hover:bg-card-soft/60">
                     <Td>
-                      <button onClick={() => setViewing(c)} className="font-medium text-amber-500 dark:text-amber-400 hover:underline">
+                      <button onClick={() => setViewing(c)} className="font-semibold text-brand underline decoration-1 underline-offset-2 transition-colors hover:text-brand-strong">
                         {c.name ?? "Unnamed customer"}
                       </button>
                     </Td>
                     <Td className="text-muted">{c.phone_number}</Td>
                     <Td><Badge tone="blue" dot>{s.count} trips</Badge></Td>
-                    <Td className="tnum font-medium text-ink">{peso0(s.gross)}</Td>
+                    <Td className="tnum font-bold text-ink">{peso0(s.gross)}</Td>
                     <Td className="text-muted">{s.last ? fmtDate(s.last) : "—"}</Td>
                   </tr>
                 );
@@ -102,8 +104,8 @@ export function Customers() {
 
       {viewing && (
         <Modal open onClose={() => setViewing(undefined)} title={viewing.name ?? viewing.phone_number} wide>
-          <p className="mb-4 text-sm text-muted">{viewing.phone_number}</p>
-          <h4 className="mb-2 text-sm font-semibold text-ink-soft">Trip History ({tripsFor(viewing.phone_number).length})</h4>
+          <p className="mb-4 text-sm font-medium text-muted">{viewing.phone_number}</p>
+          <h4 className="mb-2 text-[11px] font-bold uppercase tracking-[0.05em] text-muted">Trip History ({tripsFor(viewing.phone_number).length})</h4>
           <div className="max-h-96 overflow-y-auto">
             <table className="w-full">
               <thead className="bg-card-soft">
@@ -119,14 +121,14 @@ export function Customers() {
               <tbody className="divide-y divide-edge/70">
                 {tripsFor(viewing.phone_number).slice(0, 50).map((t) => (
                   <tr key={t.id}>
-                    <Td className="text-ink-soft">{fmtDate(t.date_time)}</Td>
-                    <Td className="text-amber-500 dark:text-amber-400">{t.transportify_id}</Td>
+                    <Td className="text-[#444749]">{fmtDate(t.date_time)}</Td>
+                    <Td className="font-bold text-ink">{t.transportify_id}</Td>
                     <Td className="max-w-[260px]">
-                      <p className="truncate text-ink-soft">{t.pickup_address}</p>
-                      <p className="truncate text-[11px] text-muted">→ {t.dropoff_address}</p>
+                      <p className="truncate text-[#444749]">{t.pickup_address}</p>
+                      <p className="truncate text-[11px] font-medium text-muted">→ {t.dropoff_address}</p>
                     </Td>
-                    <Td className="tnum text-ink-soft">{peso0(t.gross)}</Td>
-                    <Td className={cx("tnum font-medium", t.gross - t.total_expense >= 0 ? "text-emerald-500 dark:text-emerald-400" : "text-red-500 dark:text-red-400")}>
+                    <Td className="tnum text-[#444749]">{peso0(t.gross)}</Td>
+                    <Td className={cx("tnum font-bold", t.gross - t.total_expense >= 0 ? "text-[#16a34a]" : "text-[#ef4444]")}>
                       {peso0(t.gross - t.total_expense)}
                     </Td>
                     <Td>

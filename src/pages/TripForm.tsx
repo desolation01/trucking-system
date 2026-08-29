@@ -193,7 +193,7 @@ export function TripForm({
       }
     >
       <form id="trip-form" onSubmit={submit} className="space-y-4">
-        {error && <div className="rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-500 dark:text-red-500 dark:text-red-400">{error}</div>}
+        {error && <div id="trip-form-error" role="alert" tabIndex={-1} className="rounded-xl bg-red-50 px-3 py-2 text-sm font-medium text-red-600">{error}</div>}
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <Field label="Driver" required>
@@ -289,8 +289,9 @@ export function TripForm({
                   type="button"
                   key={h.id}
                   onClick={() => toggleHelper(h.id)}
+                  aria-pressed={helperIds.includes(h.id)}
                   className={cx(
-                    "rounded-full px-3 py-1 text-xs font-medium transition-colors",
+                    "min-h-11 rounded-full px-3 py-2 text-xs font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand",
                     helperIds.includes(h.id)
                       ? "bg-brand text-on-brand"
                       : "bg-card-soft text-ink-soft hover:bg-edge"
@@ -305,9 +306,9 @@ export function TripForm({
         </div>
 
         {helperIds.length > 1 && (
-          <div className="rounded-lg border border-edge bg-card-soft p-2.5">
-            <p className="mb-1.5 text-[11px] font-medium text-ink-soft">Helper commission split</p>
-            <div className="flex items-center gap-3">
+          <fieldset className="rounded-xl border border-edge bg-card-soft p-3">
+            <legend className="mb-1.5 text-[11px] font-medium text-ink-soft">Helper commission split</legend>
+            <div className="flex flex-wrap items-center gap-3">
               <label className="flex items-center gap-1.5 text-xs text-ink-soft">
                 <input type="radio" checked={helperSplit === "equal"} onChange={() => setHelperSplit("equal")} />
                 Split evenly
@@ -338,12 +339,12 @@ export function TripForm({
                 </p>
               </div>
             )}
-          </div>
+          </fieldset>
         )}
 
-        <div>
+        <fieldset>
           <div className="mb-1.5 flex items-center justify-between">
-            <p className="text-xs font-medium text-ink-soft">Itemized Expenses</p>
+            <legend className="text-xs font-medium text-ink-soft">Itemized Expenses</legend>
             <button
               type="button"
               onClick={() => setExpenses((prev) => [...prev, emptyExpense()])}
@@ -354,7 +355,7 @@ export function TripForm({
           </div>
           <div className="space-y-2">
             {expenses.map((e) => (
-              <div key={e.id} className="flex items-center gap-2">
+              <div key={e.id} className="flex flex-wrap items-center gap-2 sm:flex-nowrap">
                 <Select
                   value={e.category}
                   onChange={(ev) =>
@@ -374,7 +375,8 @@ export function TripForm({
                   step="0.01"
                   value={e.amount || ""}
                   placeholder="0.00"
-                  className="w-36 py-1.5 text-xs"
+                  aria-label={`Expense amount for ${e.category}`}
+                  className="w-36 py-2 text-xs"
                   onChange={(ev) =>
                     setExpenses((prev) =>
                       prev.map((x) => (x.id === e.id ? { ...x, amount: parseFloat(ev.target.value) || 0 } : x))
@@ -384,14 +386,15 @@ export function TripForm({
                 <button
                   type="button"
                   onClick={() => setExpenses((prev) => prev.filter((x) => x.id !== e.id))}
-                  className="rounded p-1.5 text-muted hover:bg-ink/5 hover:text-red-400"
+                  aria-label={`Remove ${e.category} expense`}
+                  className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl text-muted transition-colors hover:bg-red-50 hover:text-red-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
                 >
-                  <Trash2 className="h-3.5 w-3.5" />
+                  <Trash2 className="h-4 w-4" />
                 </button>
               </div>
             ))}
           </div>
-        </div>
+        </fieldset>
 
         <Field label="Description / Notes" className="mt-4">
           <Textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Additional notes about this trip…" />
