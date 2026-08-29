@@ -367,6 +367,8 @@ function UserManagement() {
   const [password, setPassword] = useState("");
   const [role, setRole] = useState<Role>("staff");
   const [error, setError] = useState("");
+  const [renamingId, setRenamingId] = useState<string | null>(null);
+  const [renameValue, setRenameValue] = useState("");
 
   const roleLabel: Record<Role, string> = {
     owner: "Owner / Admin",
@@ -404,6 +406,18 @@ function UserManagement() {
     }
   };
 
+  const saveRename = async (u: User) => {
+    const trimmed = renameValue.trim();
+    if (!trimmed || trimmed === u.name) { setRenamingId(null); return; }
+    try {
+      await userActions.update(u.id, { name: trimmed });
+      toast("Name updated", "success");
+    } catch (e: any) {
+      toast(e?.message ?? "Failed to rename", "error");
+    }
+    setRenamingId(null);
+  };
+
   return (
     <Card
       title="Login Accounts"
@@ -427,9 +441,6 @@ function UserManagement() {
             <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
           </Field>
           <Field label="Role">
-            {/* RLS v4: owners can only provision staff/accountant. Additional
-                owners are created in the Supabase Dashboard (Authentication →
-                Users) — client-side owner creation is blocked by policy. */}
             <Select value={role} onChange={(e) => setRole(e.target.value as Role)}>
               <option value="staff">Office Staff</option>
               <option value="accountant">Accountant</option>
@@ -444,14 +455,41 @@ function UserManagement() {
       <div className="divide-y divide-edge/70">
         {data.users.map((u) => (
           <div key={u.id} className="flex flex-wrap items-center gap-3 py-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-card-soft text-xs font-bold text-ink-soft">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-card-soft text-xs font-bold text-ink-soft">
               {u.name.slice(0, 1)}
             </div>
             <div className="min-w-0 flex-1">
-              <p className={cx("truncate text-sm font-medium", u.status === "inactive" ? "text-muted" : "text-ink")}>
-                {u.name}
-              </p>
-              <p className="truncate text-xs text-muted">{u.email}</p>
+              {renamingId === u.id ? (
+                <form
+                  onSubmit={(e) => { e.preventDefault(); saveRename(u); }}
+                  className="flex items-center gap-2"
+                >
+                  <Input
+                    value={renameValue}
+                    onChange={(e) => setRenameValue(e.target.value)}
+                    autoFocus
+                    className="h-8 py-1 text-sm"
+                  />
+                  <Button type="submit" size="sm">Save</Button>
+                  <Button type="button" size="sm" variant="secondary" onClick={() => setRenamingId(null)}>Cancel</Button>
+                </form>
+              ) : (
+                <>
+                  <p className={cx("truncate text-sm font-medium", u.status === "inactive" ? "text-muted" : "text-ink")}>
+                    {u.name}
+                    {u.id === currentUser?.id && (
+                      <button
+                        type="button"
+                        onClick={() => { setRenamingId(u.id); setRenameValue(u.name); }}
+                        className="ml-2 text-[11px] font-semibold text-brand hover:underline"
+                      >
+                        Rename
+                      </button>
+                    )}
+                  </p>
+                  <p className="truncate text-xs text-muted">{u.email}</p>
+                </>
+              )}
             </div>
             <div className="flex flex-wrap items-center gap-2 sm:ml-auto">
               <Badge tone={u.role === "owner" ? "violet" : u.role === "accountant" ? "amber" : "blue"}>{roleLabel[u.role]}</Badge>
