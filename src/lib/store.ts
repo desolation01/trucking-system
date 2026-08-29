@@ -1079,28 +1079,20 @@ export const resetData = async () => {
 
   if (isConfigured) {
     // Get the authoritative tenant ID directly from the live Supabase session.
-    // This is safer than relying on the module-level currentUserId variable,
-    // which could be stale if the session changed without a re-render.
     const { data: { session } } = await supabase!.auth.getSession();
-    const tenantId = session?.user?.id ?? currentUserId;
-    if (!tenantId) throw new Error("Cannot reset: no authenticated user found.");
+    const userId = session?.user?.id ?? currentUserId;
+    if (!userId) throw new Error("Cannot reset: no authenticated user found.");
 
-    // Resolve the actual owner_id used on data rows for this user.
-    // For an owner: their own id. For staff: their owner's id (via profiles).
+    // Resolve owner_id: owner rows have owner_id=NULL so tenant = their own id.
     const { data: profileRow } = await supabase!
       .from("profiles")
       .select("id, owner_id, role")
-      .eq("id", tenantId)
+      .eq("id", userId)
       .single();
-
-    // owner rows have owner_id = NULL → tenant = their own id
-    // staff rows have owner_id = <owner_id> → tenant = owner's id
     const resolvedTenantId =
-      profileRow?.role === "owner"
-        ? tenantId
-        : (profileRow?.owner_id ?? tenantId);
+      profileRow?.role === "owner" ? userId : (profileRow?.owner_id ?? userId);
 
-    // Delete all tenant-scoped data from Supabase in safe dependency order
+    // ── 1. Delete all tenant-scoped rows ─────────────────────────────────────
     const tables = [
       "calc_logs",
       "payroll_ledger",
@@ -1122,7 +1114,58 @@ export const resetData = async () => {
       }
     }
 
-    // After cloud wipe, reload fresh data from Supabase
+    // ── 2. Re-insert seed data tagged with this owner's tenant ID ─────────────
+    const tag = { owner_id: resolvedTenantId };
+    const now = new Date().toISOString();
+
+    try {
+      // Vehicle types
+      await supabase!.from("vehicle_types").insert(
+        seedData.vehicleTypes.map((name) => ({ ...tag, name, id: `vt-${name.replace(/\s+/g, "-").toLowerCase()}-${resolvedTenantId.slice(0, 8)}` }))
+      );
+
+      // Employees (exclude demo staff linked to local auth users)
+      const seedEmps = seedData.employees
+        .filter((e) => e.role === "driver" || e.role === "helper")
+        .map((e) => ({ ...e, ...tag, id: `${e.id}-${resolvedTenantId.slice(0, 8)}`, user_id: null, created_at: e.created_at ?? now }));
+      if (seedEmps.length > 0) await supabase!.from("employees").insert(seedEmps);
+
+      // Vehicles (update vehicle ids to match new employee ids)
+      const empIdMap: Record<string, string> = {};
+      seedData.employees.forEach((e) => {
+        empIdMap[e.id] = `${e.id}-${resolvedTenantId.slice(0, 8)}`;
+      });
+      const seedVehs = seedData.vehicles.map((v) => ({
+        ...v,
+        ...tag,
+        id: `${v.id}-${resolvedTenantId.slice(0, 8)}`,
+        driver_id: v.driver_id ? (empIdMap[v.driver_id] ?? null) : null,
+        created_at: v.created_at ?? now,
+      }));
+      if (seedVehs.length > 0) await supabase!.from("vehicles").insert(seedVehs);
+
+      // Commission rules
+      const seedRules = seedData.commissionRules.map((r) => ({
+        ...r,
+        ...tag,
+        id: `${r.id}-${resolvedTenantId.slice(0, 8)}`,
+        vehicle_type_overrides: r.vehicle_type_overrides,
+        employee_overrides: r.employee_overrides,
+        updated_at: now,
+      }));
+      if (seedRules.length > 0) await supabase!.from("commission_rules").insert(seedRules);
+
+      // Company profile
+      await supabase!.from("company_profile").insert({
+        ...tag,
+        id: `company-${resolvedTenantId.slice(0, 8)}`,
+        ...seedData.company,
+      });
+    } catch (err) {
+      reportCloudError("Failed to re-seed data after reset", err);
+    }
+
+    // ── 3. Reload fresh state from Supabase ───────────────────────────────────
     initialized = false;
     await loadFromSupabase();
     emit();
