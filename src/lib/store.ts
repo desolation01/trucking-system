@@ -288,8 +288,8 @@ async function fetchVehicleTypes(): Promise<string[]> {
 }
 
 async function fetchCompanyProfile(): Promise<AppData["company"]> {
-  const { data } = await supabase!.from("company_profile").select("*").limit(1).single();
-  if (!data) return seedData.company;
+  const { data } = await supabase!.from("company_profile").select("*").limit(1).maybeSingle();
+  if (!data) return { ...seedData.company };
     return {
       name: (data as CompanyProfileRow).name,
       address: (data as CompanyProfileRow).address,

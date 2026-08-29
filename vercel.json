@@ -5,7 +5,7 @@
     "headers": [
       {
         "key": "Content-Security-Policy",
-        "value": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; frame-ancestors https://tristan-namingit.vercel.app; base-uri 'self'; form-action 'self'"
+        "value": "default-src 'self'; script-src 'self' 'sha256-K7x0d6b0BwI9B3bBlo8py0gmL6eANVArsexEmOtvXIA='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; frame-ancestors https://tristan-namingit.vercel.app; base-uri 'self'; form-action 'self'"
       },
       { "key": "Strict-Transport-Security", "value": "max-age=63072000; includeSubDomains; preload" },
       { "key": "X-Content-Type-Options", "value": "nosniff" },
