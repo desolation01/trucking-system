@@ -1247,6 +1247,7 @@ export const resetData = async () => {
     // this freshly seeded state with empty arrays from the cloud.
     initialized = true;
     apply(localSeed);
+    console.log("[resetData] apply done — employees:", state.employees.length, "vehicles:", state.vehicles.length, "vehicleTypes:", state.vehicleTypes.length, "commissionRules:", state.commissionRules.length);
     return;
   }
 
