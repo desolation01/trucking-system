@@ -1202,8 +1202,10 @@ export const resetData = async () => {
       });
     } catch (err) { reportCloudError("Failed to seed company_profile", err); }
 
-    // ── 3. Apply seed to local state immediately so UI updates right away ────
-    // Build a local seed copy with the suffixed IDs matching what we inserted
+    // ── 3. Apply seed to local state immediately ─────────────────────────────
+    // Build a local copy with the suffixed IDs matching what we inserted.
+    // Do NOT call loadFromSupabase() after this — it has "only overlay if
+    // length > 0" guards that race with the inserts and can wipe this state.
     // (suffix and empIdMap already declared in block 2 above)
     const localSeed: AppData = {
       ...JSON.parse(JSON.stringify(seedData)),
@@ -1224,12 +1226,11 @@ export const resetData = async () => {
       })),
       vehicleTypes: [...seedData.vehicleTypes],
     };
-    apply(localSeed);
 
-    // ── 4. Reload from Supabase to confirm cloud state ────────────────────────
-    initialized = false;
-    await loadFromSupabase();
-    emit();
+    // Mark initialized so the auto-load on next render doesn't overwrite
+    // this freshly seeded state with empty arrays from the cloud.
+    initialized = true;
+    apply(localSeed);
     return;
   }
 
