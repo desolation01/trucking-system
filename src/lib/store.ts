@@ -178,8 +178,33 @@ async function loadFromSupabase(): Promise<void> {
   );
 
   try {
+    // Resolve the current user's tenant id before fetching any data.
+    // This lets us add an explicit owner_id filter as a second layer of
+    // defense on top of RLS — guards against misconfigured policies.
+    const { data: { session } } = await supabase!.auth.getSession();
+    const userId = session?.user?.id;
+
+    let resolvedTenantId: string | null = null;
+    if (userId) {
+      const { data: profileRow } = await supabase!
+        .from("profiles")
+        .select("id, owner_id, role")
+        .eq("id", userId)
+        .single();
+      resolvedTenantId =
+        profileRow?.role === "owner"
+          ? userId
+          : (profileRow?.owner_id ?? userId);
+    }
+
     const fetchAll = async <T>(table: string): Promise<T[]> => {
-      const { data } = await supabase!.from(table).select("*");
+      let query = supabase!.from(table).select("*");
+      // Apply explicit tenant filter when we know who the user is.
+      // RLS is still the primary guard; this is defence-in-depth.
+      if (resolvedTenantId) {
+        query = (query as any).eq("owner_id", resolvedTenantId);
+      }
+      const { data } = await query;
       return (data ?? []) as T[];
     };
 
@@ -591,8 +616,9 @@ export const tripActions = {
                   try { requireOwner("delete all trips"); } catch (e) { console.warn("[Auth]", e); throw e; }
                   if (isConfigured) {
                     try {
-                      // Scope delete to the current tenant only — never touch other owners' rows.
-                      const tenantId = currentUserId;
+                      // Get the authoritative tenant ID from the live Supabase session.
+                      const { data: { session } } = await supabase!.auth.getSession();
+                      const tenantId = session?.user?.id ?? currentUserId;
                       if (!tenantId) {
                         throw new Error("Cannot delete trips: no authenticated user found.");
                       }
@@ -1052,8 +1078,27 @@ export const resetData = async () => {
   try { requireOwner("reset all data"); } catch (e) { console.warn("[Auth]", e); throw e; }
 
   if (isConfigured) {
-    const tenantId = currentUserId;
+    // Get the authoritative tenant ID directly from the live Supabase session.
+    // This is safer than relying on the module-level currentUserId variable,
+    // which could be stale if the session changed without a re-render.
+    const { data: { session } } = await supabase!.auth.getSession();
+    const tenantId = session?.user?.id ?? currentUserId;
     if (!tenantId) throw new Error("Cannot reset: no authenticated user found.");
+
+    // Resolve the actual owner_id used on data rows for this user.
+    // For an owner: their own id. For staff: their owner's id (via profiles).
+    const { data: profileRow } = await supabase!
+      .from("profiles")
+      .select("id, owner_id, role")
+      .eq("id", tenantId)
+      .single();
+
+    // owner rows have owner_id = NULL → tenant = their own id
+    // staff rows have owner_id = <owner_id> → tenant = owner's id
+    const resolvedTenantId =
+      profileRow?.role === "owner"
+        ? tenantId
+        : (profileRow?.owner_id ?? tenantId);
 
     // Delete all tenant-scoped data from Supabase in safe dependency order
     const tables = [
@@ -1070,7 +1115,7 @@ export const resetData = async () => {
 
     for (const table of tables) {
       try {
-        const { error } = await supabase!.from(table).delete().eq("owner_id", tenantId);
+        const { error } = await supabase!.from(table).delete().eq("owner_id", resolvedTenantId);
         if (error) reportCloudError(`Failed to reset table "${table}"`, error);
       } catch (err) {
         reportCloudError(`Exception resetting table "${table}"`, err);
