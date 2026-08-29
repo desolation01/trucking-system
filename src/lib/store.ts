@@ -1085,16 +1085,19 @@ export const resetData = async () => {
     // Get the authoritative tenant ID directly from the live Supabase session.
     const { data: { session } } = await supabase!.auth.getSession();
     const userId = session?.user?.id ?? currentUserId;
+    console.log("[resetData] userId:", userId, "currentUserId:", currentUserId);
     if (!userId) throw new Error("Cannot reset: no authenticated user found.");
 
     // Resolve owner_id: owner rows have owner_id=NULL so tenant = their own id.
-    const { data: profileRow } = await supabase!
+    const { data: profileRow, error: profileErr } = await supabase!
       .from("profiles")
       .select("id, owner_id, role")
       .eq("id", userId)
       .single();
+    console.log("[resetData] profileRow:", profileRow, "profileErr:", profileErr);
     const resolvedTenantId =
       profileRow?.role === "owner" ? userId : (profileRow?.owner_id ?? userId);
+    console.log("[resetData] resolvedTenantId:", resolvedTenantId);
 
     // ── 1. Delete all tenant-scoped rows ─────────────────────────────────────
     const tables = [
@@ -1125,13 +1128,14 @@ export const resetData = async () => {
 
     try {
       // Vehicle types
-      await supabase!.from("vehicle_types").insert(
+      const vtResult = await supabase!.from("vehicle_types").insert(
         seedData.vehicleTypes.map((name) => ({
           ...tag,
           name,
           id: `vt-${name.replace(/\s+/g, "-").toLowerCase()}-${suffix}`,
         }))
       );
+      console.log("[resetData] vehicle_types insert:", vtResult.error ?? "OK");
     } catch (err) { reportCloudError("Failed to seed vehicle_types", err); }
 
     // Employees (drivers + helpers only — not demo staff tied to local auth)
@@ -1152,7 +1156,10 @@ export const resetData = async () => {
         created_at: e.created_at ?? now,
       }));
     if (seedEmps.length > 0) {
-      try { await supabase!.from("employees").insert(seedEmps); }
+      try {
+        const empResult = await supabase!.from("employees").insert(seedEmps);
+        console.log("[resetData] employees insert:", empResult.error ?? "OK");
+      }
       catch (err) { reportCloudError("Failed to seed employees", err); }
     }
 
@@ -1162,7 +1169,7 @@ export const resetData = async () => {
     const seedVehs = seedData.vehicles.map((v) => ({
       id: `${v.id}-${suffix}`,
       ...tag,
-      plate_number: `${v.plate_number}-${suffix}`,   // avoid global UNIQUE conflict
+      plate_number: `${v.plate_number}-${suffix}`,
       type: v.type,
       capacity_kg: v.capacity_kg,
       status: v.status,
@@ -1170,11 +1177,14 @@ export const resetData = async () => {
       created_at: v.created_at ?? now,
     }));
     if (seedVehs.length > 0) {
-      try { await supabase!.from("vehicles").insert(seedVehs); }
+      try {
+        const vehResult = await supabase!.from("vehicles").insert(seedVehs);
+        console.log("[resetData] vehicles insert:", vehResult.error ?? "OK");
+      }
       catch (err) { reportCloudError("Failed to seed vehicles", err); }
     }
 
-    // Commission rules — only send columns that exist in the table
+    // Commission rules
     const seedRules = seedData.commissionRules.map((r) => ({
       id: `${r.id}-${suffix}`,
       ...tag,
@@ -1189,18 +1199,24 @@ export const resetData = async () => {
       updated_at: now,
     }));
     if (seedRules.length > 0) {
-      try { await supabase!.from("commission_rules").insert(seedRules); }
+      try {
+        const ruleResult = await supabase!.from("commission_rules").insert(seedRules);
+        console.log("[resetData] commission_rules insert:", ruleResult.error ?? "OK");
+      }
       catch (err) { reportCloudError("Failed to seed commission_rules", err); }
     }
 
     // Company profile
     try {
-      await supabase!.from("company_profile").insert({
+      const compResult = await supabase!.from("company_profile").insert({
         id: `company-${suffix}`,
         ...tag,
         ...seedData.company,
       });
+      console.log("[resetData] company_profile insert:", compResult.error ?? "OK");
     } catch (err) { reportCloudError("Failed to seed company_profile", err); }
+
+    console.log("[resetData] all inserts done, applying local seed state");
 
     // ── 3. Apply seed to local state immediately ─────────────────────────────
     // Build a local copy with the suffixed IDs matching what we inserted.
