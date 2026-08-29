@@ -379,7 +379,7 @@ export function Layout({
           onClick={logout}
           title="Sign out"
           aria-label="Sign out"
-          className="flex min-h-10 w-full items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm font-semibold text-red-600 transition-colors hover:bg-red-100 dark:border-red-900/40 dark:bg-red-950/30 dark:text-red-400 dark:hover:bg-red-950/50"
+          className="flex min-h-10 w-full items-center gap-2 rounded-xl bg-red-600 px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-red-700 active:bg-red-800"
         >
           <LogOut className="h-4 w-4 shrink-0" />
           Sign out

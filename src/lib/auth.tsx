@@ -138,7 +138,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(null);
         setCurrentRole(null, null);
       } else {
-          const u = mapProfileToUser({ ...data[0], email: data[0].email ?? "" });
+          const { data: { user: authUser } } = await supabase!.auth.getUser();
+          const u = mapProfileToUser({ ...data[0], email: authUser?.email ?? data[0].email ?? "" });
           setUser(u);
           // Pass userId so the store can scope tenant-level operations correctly.
           setCurrentRole(u.role, u.id);
