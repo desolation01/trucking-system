@@ -270,8 +270,8 @@ export function Login() {
                 <span>Your session is protected by your organization’s authentication provider.</span>
               </div>
 
-              {/* Demo accounts */}
-              {!isConfigured && mode === "signin" && (
+              {/* Demo accounts — ponytail: always shown; hide by adding `&& !isConfigured` if you only want this on local/demo deploys */}
+              {mode === "signin" && (
                 <div data-login-card className="mt-5 rounded-2xl border border-[#dce4f2] bg-white/80 p-4 shadow-[0_12px_32px_rgba(18,28,44,0.08)]">
                   <p className="mb-3 text-center text-[11px] font-semibold uppercase tracking-[0.14em] text-[#6b7280]">
                     Demo accounts
