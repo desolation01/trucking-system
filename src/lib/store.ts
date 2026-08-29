@@ -1204,10 +1204,7 @@ export const resetData = async () => {
 
     // ── 3. Apply seed to local state immediately so UI updates right away ────
     // Build a local seed copy with the suffixed IDs matching what we inserted
-    const suffix = resolvedTenantId.slice(0, 8);
-    const empIdMap: Record<string, string> = {};
-    seedData.employees.forEach((e) => { empIdMap[e.id] = `${e.id}-${suffix}`; });
-
+    // (suffix and empIdMap already declared in block 2 above)
     const localSeed: AppData = {
       ...JSON.parse(JSON.stringify(seedData)),
       trips: [],
