@@ -11,8 +11,6 @@ const loginInputCls =
 
 const demos = [
   { label: "Owner", email: "owner@trucking.ph", password: "demo1234" },
-  { label: "Office Staff", email: "grace@trucking.ph", password: "demo1234" },
-  { label: "Accountant", email: "carlo@trucking.ph", password: "demo1234" },
 ];
 
 type Mode = "signin" | "register";
