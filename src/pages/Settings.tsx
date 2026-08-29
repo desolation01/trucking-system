@@ -111,9 +111,9 @@ export function Settings() {
 
       <div id="data-settings" className="scroll-mt-20">
       <Card title="Data Management" subtitle="Owner-only controls for company records">
-        <div className="mb-4 rounded-xl bg-red-50 px-4 py-3 dark:bg-red-950/40">
-          <p className="text-sm font-semibold text-red-700 dark:text-red-400">These actions affect company records</p>
-          <p className="mt-1 text-xs leading-relaxed text-red-600 dark:text-red-500">Review the consequences before continuing. Destructive changes cannot be undone.</p>
+        <div className="mb-4 rounded-xl bg-red-50 px-4 py-3">
+          <p className="text-sm font-semibold text-red-700">These actions affect company records</p>
+          <p className="mt-1 text-xs leading-relaxed text-red-600">Review the consequences before continuing. Destructive changes cannot be undone.</p>
         </div>
         <div className="space-y-4">
           {/* Delete all trips */}
