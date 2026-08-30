@@ -241,7 +241,7 @@ export function Dashboard({ onNavigate }: { onNavigate: (p: PageKey) => void }) 
       {/* Charts row */}
       <div className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-3">
         {/* Income vs Expense */}
-        <div className="flex min-h-0 min-w-0 flex-col rounded-[20px] bg-card p-5 shadow-card lg:col-span-2 lg:h-[420px]">
+        <div className="flex h-[360px] min-h-0 min-w-0 flex-col rounded-[20px] bg-card p-5 shadow-card lg:col-span-2 lg:h-[420px]">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <h3 className="text-base font-semibold text-ink">Income vs Expense</h3>
