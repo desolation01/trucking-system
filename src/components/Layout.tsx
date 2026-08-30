@@ -389,7 +389,7 @@ export function Layout({
   );
 
   return (
-    <div className="flex h-full bg-surface">
+    <div className="flex h-full min-w-0 overflow-x-hidden bg-surface">
       <a href="#main-content" className="sr-only rounded-lg bg-brand px-3 py-2 text-sm font-semibold text-on-brand focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[110]">
         Skip to main content
       </a>
@@ -400,7 +400,7 @@ export function Layout({
           <aside id="mobile-navigation" className="absolute left-0 top-0 h-full w-64 shadow-dropdown">{sidebar}</aside>
         </div>
       )}
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="flex min-w-0 flex-1 flex-col overflow-x-hidden">
         <header className="flex items-center gap-3 border-b border-edge bg-card/80 px-4 py-3 backdrop-blur-md lg:px-8">
           <button
             onClick={() => setOpen(true)}
@@ -459,7 +459,7 @@ export function Layout({
             <Search className="h-5 w-5" />
           </button>
         </header>
-        <main id="main-content" className="flex-1 overflow-y-auto bg-surface">
+        <main id="main-content" className="min-w-0 flex-1 overflow-x-hidden overflow-y-auto bg-surface">
           <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
             <OperationsStrip />
             {children}

@@ -142,7 +142,7 @@ export function Dashboard({ onNavigate }: { onNavigate: (p: PageKey) => void }) 
   if (showSkeleton) return <div className="space-y-6"><div className="flex gap-2"><Skeleton className="h-10 w-28 rounded-xl" /><Skeleton className="h-10 w-28 rounded-xl" /><Skeleton className="h-10 w-28 rounded-xl" /></div><div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4"><SkeletonCard /><SkeletonCard /><SkeletonCard /><SkeletonCard /></div><Skeleton className="h-96 rounded-[20px]" /></div>;
 
   return (
-    <div className="space-y-6">
+    <div className="min-w-0 space-y-6">
       {/* Page header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
@@ -189,7 +189,7 @@ export function Dashboard({ onNavigate }: { onNavigate: (p: PageKey) => void }) 
           </div>
           <div className="grid gap-2 md:grid-cols-2">
             {attention.map((item) => (
-              <div key={item.id} className="flex items-center gap-3 rounded-xl bg-card-soft px-3.5 py-3">
+              <div key={item.id} className="flex min-w-0 items-center gap-3 rounded-xl bg-card-soft px-3.5 py-3">
                 <span className={cx("h-2.5 w-2.5 shrink-0 rounded-full", item.tone === "red" ? "bg-red-500" : item.tone === "amber" ? "bg-amber-500" : "bg-muted")} aria-hidden="true" />
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-semibold text-ink">{item.label}</p>
@@ -239,9 +239,9 @@ export function Dashboard({ onNavigate }: { onNavigate: (p: PageKey) => void }) 
       </div>
 
       {/* Charts row */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+      <div className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-3">
         {/* Income vs Expense */}
-        <div className="flex min-h-0 flex-col rounded-[20px] bg-card p-5 shadow-card lg:col-span-2 lg:h-[420px]">
+        <div className="flex min-h-0 min-w-0 flex-col rounded-[20px] bg-card p-5 shadow-card lg:col-span-2 lg:h-[420px]">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <h3 className="text-base font-semibold text-ink">Income vs Expense</h3>
@@ -304,7 +304,7 @@ export function Dashboard({ onNavigate }: { onNavigate: (p: PageKey) => void }) 
         </div>
 
         {/* Expense Breakdown donut */}
-        <div className="flex min-h-0 flex-col rounded-[20px] bg-card p-5 shadow-card">
+        <div className="flex min-h-0 min-w-0 flex-col rounded-[20px] bg-card p-5 shadow-card">
           <div>
             <h3 className="text-base font-semibold text-ink">Expense Breakdown</h3>
             <p className="mt-0.5 text-xs font-medium text-muted">{range.label} allocation</p>
@@ -352,7 +352,7 @@ export function Dashboard({ onNavigate }: { onNavigate: (p: PageKey) => void }) 
       </div>
 
       {/* Middle row */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+      <div className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-2">
         <PanelCard title="Top Drivers" subtitle="Ranked by profit" actions={
           <button onClick={() => onNavigate("payroll")} className="text-xs font-semibold text-brand hover:underline">
             View Payroll
@@ -468,7 +468,7 @@ export function Dashboard({ onNavigate }: { onNavigate: (p: PageKey) => void }) 
 
 function MetricCard({ label, value, delta, icon, tile, caption }: { label: string; value: string; delta: number | null; icon: React.ReactNode; tile: string; caption: string }) {
   return (
-    <div className="flex flex-col justify-between rounded-[20px] bg-card p-5 shadow-card transition-shadow duration-300 hover:shadow-card-hover">
+    <div className="flex min-w-0 flex-col justify-between rounded-[20px] bg-card p-5 shadow-card transition-shadow duration-300 hover:shadow-card-hover">
       <div className="flex items-start justify-between gap-3">
         <h3 className={cx("text-[11px] font-semibold uppercase tracking-[0.08em]", "text-muted")}>{label}</h3>
         <span className={cx("flex h-10 w-10 shrink-0 items-center justify-center rounded-xl", tile)}>{icon}</span>
